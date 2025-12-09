@@ -11,5 +11,6 @@ module com.esports.arena.esportsarena {
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
     requires com.fasterxml.jackson.annotation;
+    requires java.sql;
 
 }
