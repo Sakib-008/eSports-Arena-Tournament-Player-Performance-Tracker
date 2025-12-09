@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane stylesheets="@../css/styles.css" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/25" fx:controller="com.esports.arena.OrganizerDashboardController">
+
+    <top>
+        <VBox styleClass="dashboard-header">
+            <Label styleClass="dashboard-title" text="Organizer Dashboard" />
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <padding><Insets top="10" /></padding>
+                <Button fx:id="exportDataBtn" onAction="#handleExportData" styleClass="header-button" text="Export Data" />
+                <Button fx:id="importDataBtn" onAction="#handleImportData" styleClass="header-button" text="Import Data" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Button fx:id="backToMenuBtn" onAction="#handleBackToMenu" styleClass="header-button" text="Back to Menu" />
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE">
+
+            <Tab text="Teams">
+                <BorderPane>
+                    <center>
+                        <TableView fx:id="teamsTable">
+                            <columns>
+                                <TableColumn fx:id="teamNameCol" prefWidth="150" text="Team Name" />
+                                <TableColumn fx:id="teamTagCol" prefWidth="80" text="Tag" />
+                                <TableColumn fx:id="teamRegionCol" prefWidth="100" text="Region" />
+                                <TableColumn fx:id="teamWinsCol" prefWidth="60" text="Wins" />
+                                <TableColumn fx:id="teamLossesCol" prefWidth="60" text="Losses" />
+                                <TableColumn fx:id="teamWinRateCol" prefWidth="100" text="Win Rate %" />
+                            </columns>
+                        </TableView>
+                    </center>
+                    <bottom>
+                        <HBox spacing="10" style="-fx-padding: 10;">
+                            <Button fx:id="addTeamBtn" onAction="#handleAddTeam" styleClass="primary-button" text="Add Team" />
+                            <Button fx:id="editTeamBtn" onAction="#handleEditTeam" styleClass="primary-button" text="Edit Team" />
+                            <Button fx:id="deleteTeamBtn" onAction="#handleDeleteTeam" styleClass="danger-button" text="Delete Team" />
+                            <Button fx:id="viewTeamPlayersBtn" onAction="#handleViewTeamPlayers" styleClass="primary-button" text="View Players" />
+                        </HBox>
+                    </bottom>
+                </BorderPane>
+            </Tab>
+
+            <Tab text="Players">
+                <BorderPane>
+                    <center>
+                        <TableView fx:id="playersTable">
+                            <columns>
+                                <TableColumn fx:id="playerUsernameCol" prefWidth="120" text="Username" />
+                                <TableColumn fx:id="playerRealNameCol" prefWidth="120" text="Real Name" />
+                                <TableColumn fx:id="playerRoleCol" prefWidth="100" text="Role" />
+                                <TableColumn fx:id="playerAvailabilityCol" prefWidth="100" text="Status" />
+                                <TableColumn fx:id="playerKillsCol" prefWidth="60" text="Kills" />
+                                <TableColumn fx:id="playerDeathsCol" prefWidth="60" text="Deaths" />
+                                <TableColumn fx:id="playerKDCol" prefWidth="70" text="K/D" />
+                            </columns>
+                        </TableView>
+                    </center>
+                    <bottom>
+                        <HBox spacing="10" style="-fx-padding: 10;">
+                            <Button fx:id="addPlayerBtn" onAction="#handleAddPlayer" styleClass="primary-button" text="Add Player" />
+                            <Button fx:id="editPlayerBtn" onAction="#handleEditPlayer" styleClass="primary-button" text="Edit Player" />
+                            <Button fx:id="deletePlayerBtn" onAction="#handleDeletePlayer" styleClass="danger-button" text="Delete Player" />
+                            <Button fx:id="assignTeamBtn" styleClass="primary-button" text="Assign to Team" />
+                        </HBox>
+                    </bottom>
+                </BorderPane>
+            </Tab>
+
+            <Tab text="Tournaments">
+                <SplitPane dividerPositions="0.3">
+                    <ListView fx:id="tournamentsList" />
+                    <VBox spacing="15" styleClass="card">
+                        <Label styleClass="card-title" text="Tournament Details" />
+                        <Separator />
+                        <GridPane hgap="10" vgap="10">
+                            <Label styleClass="grid-label" text="Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                            <Label fx:id="tournamentNameLabel" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                            <Label styleClass="grid-label" text="Game:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                            <Label fx:id="tournamentGameLabel" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                            <Label styleClass="grid-label" text="Status:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                            <Label fx:id="tournamentStatusLabel" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                            <Label styleClass="grid-label" text="Prize Pool:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                            <Label fx:id="tournamentPrizeLabel" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                     <columnConstraints>
+                        <ColumnConstraints />
+                        <ColumnConstraints />
+                     </columnConstraints>
+                     <rowConstraints>
+                        <RowConstraints />
+                        <RowConstraints />
+                        <RowConstraints />
+                        <RowConstraints />
+                     </rowConstraints>
+                        </GridPane>
+                        <HBox spacing="10">
+                            <Button fx:id="createTournamentBtn" styleClass="primary-button" text="Create Tournament" />
+                            <Button fx:id="startTournamentBtn" styleClass="success-button" text="Start Tournament" />
+                            <Button fx:id="viewMatchesBtn" styleClass="primary-button" text="View Matches" />
+                        </HBox>
+                    </VBox>
+                </SplitPane>
+            </Tab>
+
+            <Tab text="Leaderboard">
+                <BorderPane>
+                    <center>
+                        <TableView fx:id="leaderboardTable">
+                            <columns>
+                                <TableColumn fx:id="lbRankCol" prefWidth="60" text="Rank" />
+                                <TableColumn fx:id="lbTeamCol" prefWidth="200" text="Team" />
+                                <TableColumn fx:id="lbWinsCol" prefWidth="80" text="Wins" />
+                                <TableColumn fx:id="lbLossesCol" prefWidth="80" text="Losses" />
+                                <TableColumn fx:id="lbWinRateCol" prefWidth="100" text="Win Rate %" />
+                            </columns>
+                        </TableView>
+                    </center>
+                    <bottom>
+                        <HBox style="-fx-padding: 10;">
+                            <Button fx:id="refreshLeaderboardBtn" onAction="#handleRefreshLeaderboard" styleClass="primary-button" text="Refresh" />
+                        </HBox>
+                    </bottom>
+                </BorderPane>
+            </Tab>
+        </TabPane>
+    </center>
+</BorderPane>
