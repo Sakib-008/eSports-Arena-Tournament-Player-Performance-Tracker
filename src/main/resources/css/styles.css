@@ -1,3 +1,299 @@
-/*.main-menu {*/
-/*    -fx-background-color: linear-gradient(to bottom, #1a1a2e, #16213e);*/
-/*}*/
+
+.root {
+    -fx-primary-dark: #0f3460;
+    -fx-primary-light: #16213e;
+    -fx-accent: #00d4ff;
+    -fx-danger: #e94560;
+    -fx-success: #2ecc71;
+    -fx-warning: #f39c12;
+    -fx-background: #1a1a2e;
+    -fx-surface: #ffffff;
+    -fx-text-light: #e8e8e8;
+    -fx-text-dark: #333333;
+}
+
+/* Main Menu Styling */
+.main-menu {
+    -fx-background-color: linear-gradient(to bottom, #1a1a2e, #16213e);
+}
+
+.title-label {
+    -fx-text-fill: -fx-accent;
+    -fx-font-size: 48px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(0, 212, 255, 0.5), 10, 0, 0, 0);
+}
+
+.subtitle-label {
+    -fx-text-fill: -fx-text-light;
+    -fx-font-size: 20px;
+}
+
+.menu-button {
+    -fx-background-color: -fx-primary-dark;
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+    -fx-font-size: 18px;
+    -fx-padding: 20 40;
+}
+
+.menu-button:hover {
+    -fx-background-color: derive(-fx-primary-dark, 20%);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.exit-button {
+    -fx-background-color: -fx-danger;
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+    -fx-font-size: 16px;
+}
+
+.exit-button:hover {
+    -fx-background-color: derive(-fx-danger, 20%);
+}
+
+.version-label {
+    -fx-text-fill: #8b8b8b;
+    -fx-font-size: 12px;
+}
+
+/* Dashboard Common Styling */
+.dashboard-header {
+    -fx-background-color: -fx-primary-dark;
+    -fx-padding: 20;
+}
+
+.dashboard-title {
+    -fx-text-fill: white;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+.header-button {
+    -fx-background-color: derive(-fx-primary-dark, 30%);
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+    -fx-cursor: hand;
+    -fx-padding: 8 16;
+}
+
+.header-button:hover {
+    -fx-background-color: derive(-fx-primary-dark, 50%);
+}
+
+.primary-button {
+    -fx-background-color: -fx-primary-dark;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+    -fx-cursor: hand;
+    -fx-padding: 8 16;
+}
+
+.primary-button:hover {
+    -fx-background-color: derive(-fx-primary-dark, 20%);
+}
+
+.success-button {
+    -fx-background-color: -fx-success;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+    -fx-cursor: hand;
+}
+
+.success-button:hover {
+    -fx-background-color: derive(-fx-success, 20%);
+}
+
+.danger-button {
+    -fx-background-color: -fx-danger;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+    -fx-cursor: hand;
+}
+
+.danger-button:hover {
+    -fx-background-color: derive(-fx-danger, 20%);
+}
+
+/* Card Styling */
+.card {
+    -fx-background-color: white;
+    -fx-background-radius: 5;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 5, 0, 0, 2);
+}
+
+.card-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+/* Table Styling */
+.table-view {
+    -fx-background-color: white;
+}
+
+.table-view .column-header {
+    -fx-background-color: -fx-primary-dark;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: derive(-fx-accent, 80%);
+}
+
+.table-row-cell:selected {
+    -fx-background-color: derive(-fx-accent, 60%);
+}
+
+/* Tab Pane Styling */
+.tab-pane {
+    -fx-tab-min-height: 40px;
+}
+
+.tab-pane .tab {
+    -fx-background-color: #e0e0e0;
+    -fx-background-radius: 5 5 0 0;
+    -fx-padding: 10 20;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: -fx-primary-dark;
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.tab-pane .tab:hover {
+    -fx-background-color: derive(-fx-primary-dark, 40%);
+}
+
+/* Stat Labels */
+.stat-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.stat-value {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.stat-kills {
+    -fx-text-fill: -fx-success;
+}
+
+.stat-deaths {
+    -fx-text-fill: -fx-danger;
+}
+
+.stat-assists {
+    -fx-text-fill: #3498db;
+}
+
+/* Status Indicators */
+.status-available {
+    -fx-text-fill: -fx-success;
+    -fx-font-weight: bold;
+}
+
+.status-unavailable {
+    -fx-text-fill: -fx-danger;
+    -fx-font-weight: bold;
+}
+
+/* List View Styling */
+.list-view {
+    -fx-background-color: white;
+    -fx-border-color: #ddd;
+    -fx-border-width: 1;
+}
+
+.list-cell {
+    -fx-padding: 8;
+}
+
+.list-cell:hover {
+    -fx-background-color: derive(-fx-accent, 80%);
+}
+
+.list-cell:selected {
+    -fx-background-color: -fx-accent;
+    -fx-text-fill: white;
+}
+
+/* Form Elements */
+.text-field, .text-area, .combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #ddd;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+.text-field:focused, .text-area:focused, .combo-box:focused {
+    -fx-border-color: -fx-accent;
+    -fx-border-width: 2;
+}
+
+/* Toggle Button */
+.toggle-button {
+    -fx-background-color: #bdc3c7;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+}
+
+.toggle-button:selected {
+    -fx-background-color: -fx-success;
+}
+
+/* Separator */
+.separator {
+    -fx-background-color: #ddd;
+}
+
+/* Chart Styling */
+.chart {
+    -fx-background-color: white;
+    -fx-padding: 10;
+}
+
+.chart-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+/* ScrollPane */
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+/* GridPane Labels */
+.grid-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: #666;
+}
+
+.grid-value {
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-dark;
+}
+
+/* Tooltip */
+.tooltip {
+    -fx-background-color: -fx-primary-dark;
+    -fx-text-fill: white;
+    -fx-background-radius: 3;
+    -fx-padding: 5;
+    -fx-font-size: 12px;
+}
