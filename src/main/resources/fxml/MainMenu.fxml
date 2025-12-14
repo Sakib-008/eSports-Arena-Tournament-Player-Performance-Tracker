@@ -6,26 +6,26 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox fx:id="mainMenuContainer" alignment="CENTER" spacing="30" styleClass="main-menu" stylesheets="@../css/styles.css" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/25" fx:controller="com.esports.arena.MainMenuController">
+<VBox fx:id="mainMenuContainer" alignment="CENTER" spacing="40" styleClass="main-menu" stylesheets="@../css/styles.css" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/25" fx:controller="com.esports.arena.MainMenuController" style="-fx-font-size: 16px;">
 
     <padding>
-        <Insets bottom="50" left="50" right="50" top="50" />
+        <Insets bottom="80" left="100" right="100" top="80" />
     </padding>
 
-    <Label styleClass="title-label" text="eSports Arena" />
-    <Label styleClass="subtitle-label" text="Tournament &amp; Player Performance Tracker" />
+    <Label styleClass="title-label" text="eSports Arena" style="-fx-font-size: 80px;"/>
+    <Label styleClass="subtitle-label" text="Tournament &amp; Player Performance Tracker" style="-fx-font-size: 32px;"/>
 
     <Region VBox.vgrow="ALWAYS" />
 
-    <VBox alignment="CENTER" prefWidth="400" spacing="20">
-        <Button fx:id="organizerButton" onAction="#handleOrganizerMode" prefHeight="60" prefWidth="350" styleClass="menu-button" text="Organizer Mode" />
+    <VBox alignment="CENTER" prefWidth="500" spacing="30">
+        <Button fx:id="organizerButton" onAction="#handleOrganizerMode" prefHeight="80" prefWidth="450" styleClass="menu-button" text="Organizer Mode" style="-fx-font-size: 28px; -fx-padding: 25 50;"/>
 
-        <Button fx:id="playerButton" onAction="#handlePlayerMode" prefHeight="60" prefWidth="350" styleClass="menu-button" text="Player/Team Mode" />
+        <Button fx:id="playerButton" onAction="#handlePlayerMode" prefHeight="80" prefWidth="450" styleClass="menu-button" text="Player/Team Mode" style="-fx-font-size: 28px; -fx-padding: 25 50;"/>
 
-        <Button fx:id="exitButton" onAction="#handleExit" prefHeight="50" prefWidth="350" styleClass="exit-button" text="Exit" />
+        <Button fx:id="exitButton" onAction="#handleExit" prefHeight="70" prefWidth="450" styleClass="exit-button" text="Exit" style="-fx-font-size: 26px; -fx-padding: 20 50;"/>
     </VBox>
 
     <Region VBox.vgrow="ALWAYS" />
 
-    <Label styleClass="version-label" text="Version 1.0 - © 2025" />
+    <Label styleClass="version-label" text="Version 1.0 - © 2025" style="-fx-font-size: 16px;"/>
 </VBox>

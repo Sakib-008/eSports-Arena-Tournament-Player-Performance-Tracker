@@ -1,16 +1,24 @@
 module com.esports.arena.esportsarena {
+    // JavaFX modules
     requires javafx.controls;
     requires javafx.fxml;
-    requires javafx.web;
 
-    requires org.controlsfx.controls;
-    requires com.dlsc.formsfx;
-    requires net.synedra.validatorfx;
-    requires org.kordamp.ikonli.javafx;
-    requires org.kordamp.bootstrapfx.core;
-    requires eu.hansolo.tilesfx;
-    requires com.almasb.fxgl.all;
-    requires com.fasterxml.jackson.annotation;
+    // Database
     requires java.sql;
+    requires org.xerial.sqlitejdbc;
 
+    // JSON processing
+    requires com.fasterxml.jackson.databind;
+    requires com.fasterxml.jackson.datatype.jsr310;
+    requires com.fasterxml.jackson.annotation;
+
+    // Export packages to JavaFX
+    opens com.esports.arena to javafx.fxml;
+    opens com.esports.arena.model to javafx.base, com.fasterxml.jackson.databind;
+
+    exports com.esports.arena;
+    exports com.esports.arena.model;
+    exports com.esports.arena.dao;
+    exports com.esports.arena.database;
+    exports com.esports.arena.service;
 }

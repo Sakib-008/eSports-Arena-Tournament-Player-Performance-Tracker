@@ -114,7 +114,7 @@
                      </rowConstraints>
                         </GridPane>
                         <HBox spacing="10">
-                            <Button fx:id="createTournamentBtn" styleClass="primary-button" text="Create Tournament" />
+                            <Button fx:id="createTournamentBtn" onAction="#handleCreateTournament" styleClass="primary-button" text="Create Tournament" />
                             <Button fx:id="startTournamentBtn" styleClass="success-button" text="Start Tournament" />
                             <Button fx:id="viewMatchesBtn" styleClass="primary-button" text="View Matches" />
                         </HBox>

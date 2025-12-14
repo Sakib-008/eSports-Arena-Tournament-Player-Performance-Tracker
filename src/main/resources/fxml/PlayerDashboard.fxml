@@ -21,7 +21,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="664.0" prefWidth="540.0" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esports.arena.PlayerDashboardController">
+<BorderPane prefHeight="656.0" prefWidth="578.0" stylesheets="@../css/styles.css" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/25" fx:controller="com.esports.arena.PlayerDashboardController">
 
     <top>
         <VBox styleClass="dashboard-header">
@@ -132,6 +132,13 @@
                         </GridPane>
                     </VBox>
 
+                    <VBox spacing="10" styleClass="card">
+                        <Label styleClass="card-title" text="Record Match Statistics" />
+                        <Separator />
+                        <Label style="-fx-font-size: 12px;" text="Record your performance from a recent match:" />
+                        <Button fx:id="recordStatsBtn" maxWidth="Infinity" onAction="#handleRecordStats" styleClass="primary-button" text="Record Match Statistics" />
+                    </VBox>
+
                     <VBox spacing="10" styleClass="card" VBox.vgrow="ALWAYS">
                         <Label styleClass="card-title" text="Performance Chart" />
                         <Separator />
@@ -196,21 +203,21 @@
                         <Label styleClass="card-title" text="Team Leader Election" />
                         <Separator />
                         <Label text="Vote for your preferred team leader. Each team member gets one vote." wrapText="true" />
-                        <Label fx:id="votingStatusLabel" style="-fx-font-style: italic; -fx-font-weight: bold;" />
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <Label style="-fx-font-weight: bold;" text="Your Status:" />
+                            <Label fx:id="votingStatusLabel" style="-fx-font-style: italic; -fx-font-weight: bold;" />
+                        </HBox>
                     </VBox>
 
                     <VBox spacing="10" styleClass="card" VBox.vgrow="ALWAYS">
-                        <Label styleClass="card-title" text="Select Candidate" />
-                        <Separator />
-                        <ListView fx:id="voteCandidatesList" VBox.vgrow="ALWAYS" />
-                        <Button fx:id="castVoteBtn" maxWidth="Infinity" onAction="#handleCastVote" styleClass="success-button" text="Cast Vote" />
-                    </VBox>
-
-                    <VBox spacing="10" styleClass="card">
                         <HBox alignment="CENTER_LEFT" spacing="10">
-                            <Label styleClass="card-title" text="Voting Results" HBox.hgrow="ALWAYS" />
-                            <Button fx:id="viewVotingResultsBtn" onAction="#handleViewVotingResults" styleClass="primary-button" text="View Results" />
+                            <Label styleClass="card-title" text="Select Candidate" HBox.hgrow="ALWAYS" />
+                            <Button fx:id="viewVotingResultsBtn" onAction="#handleViewVotingResults" styleClass="primary-button" text="View Current Results" />
                         </HBox>
+                        <Separator />
+                        <Label style="-fx-font-size: 12px;" text="Click on a team member to select them as your vote:" />
+                        <ListView fx:id="voteCandidatesList" VBox.vgrow="ALWAYS" />
+                        <Button fx:id="castVoteBtn" maxWidth="Infinity" onAction="#handleCastVote" styleClass="success-button" text="Cast Your Vote" />
                     </VBox>
 
                 </VBox>
