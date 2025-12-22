@@ -24,7 +24,6 @@ public class OrganizerDAO {
         this.executor = Executors.newFixedThreadPool(2);
     }
 
-    // Get organizer by username
     public Organizer getOrganizerByUsername(String username) {
         String query = "SELECT * FROM organizers WHERE username = ?";
         try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(query)) {
@@ -39,7 +38,6 @@ public class OrganizerDAO {
         return null;
     }
 
-    // Get organizer by ID
     public Organizer getOrganizerById(int id) {
         String query = "SELECT * FROM organizers WHERE id = ?";
         try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(query)) {
@@ -54,7 +52,6 @@ public class OrganizerDAO {
         return null;
     }
 
-    // Get all organizers
     public List<Organizer> getAllOrganizers() {
         List<Organizer> organizers = new ArrayList<>();
         String query = "SELECT * FROM organizers";
@@ -69,7 +66,6 @@ public class OrganizerDAO {
         return organizers;
     }
 
-    // Create organizer
     public boolean createOrganizer(Organizer organizer) {
         String query = "INSERT INTO organizers (username, password, email, full_name, created_date) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
@@ -94,7 +90,6 @@ public class OrganizerDAO {
         return false;
     }
 
-    // Update organizer
     public boolean updateOrganizer(Organizer organizer) {
         String query = "UPDATE organizers SET username = ?, password = ?, email = ?, full_name = ? WHERE id = ?";
         try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(query)) {
@@ -111,7 +106,6 @@ public class OrganizerDAO {
         return false;
     }
 
-    // Delete organizer
     public boolean deleteOrganizer(int id) {
         String query = "DELETE FROM organizers WHERE id = ?";
         try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(query)) {
@@ -123,7 +117,6 @@ public class OrganizerDAO {
         return false;
     }
 
-    // Authenticate organizer (username and password check)
     public Organizer authenticateOrganizer(String username, String password) {
         Organizer organizer = getOrganizerByUsername(username);
         if (organizer != null && organizer.getPassword().equals(password)) {
@@ -132,7 +125,6 @@ public class OrganizerDAO {
         return null;
     }
 
-    // Async method for authentication
     public CompletableFuture<Organizer> authenticateOrganizerAsync(String username, String password) {
         return CompletableFuture.supplyAsync(() -> authenticateOrganizer(username, password), executor);
     }

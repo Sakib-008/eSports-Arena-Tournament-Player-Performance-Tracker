@@ -32,7 +32,7 @@ public class PlayerMatchStats {
     private int goldEarned;
 
     @JsonProperty("mvp")
-    private boolean mvp; // Most Valuable Player flag
+    private boolean mvp;
 
     public PlayerMatchStats() {}
 

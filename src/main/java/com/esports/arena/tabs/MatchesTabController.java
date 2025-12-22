@@ -52,7 +52,6 @@ public class MatchesTabController {
         this.teamsData = teamsData;
         this.matchesData = FXCollections.observableArrayList();
         setupMatchesTable();
-        // Load all matches initially
         loadAllMatches();
     }
 
@@ -101,7 +100,7 @@ public class MatchesTabController {
             @Override
             protected List<Match> call() {
                 List<Match> matches = matchDAO.getMatchesByTournament(tournamentId);
-                // If no matches exist, return empty list (don't show error)
+                // If no matches exist, return empty list.
                 return matches != null ? matches : new java.util.ArrayList<>();
             }
         };
@@ -291,6 +290,7 @@ public class MatchesTabController {
                             } catch (NumberFormatException ignored) {
                             }
 
+                            // Adding player stats here
                             com.esports.arena.model.PlayerMatchStats stats = new com.esports.arena.model.PlayerMatchStats();
                             stats.setMatchId(match.getId());
                             stats.setPlayerId(pi.playerId);

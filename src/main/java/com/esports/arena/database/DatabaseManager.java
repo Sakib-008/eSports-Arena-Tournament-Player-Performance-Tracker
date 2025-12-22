@@ -34,9 +34,7 @@ public class DatabaseManager {
         }
     }
 
-    /**
-     * Run lightweight migrations to add missing columns introduced in newer versions.
-     */
+    // Migration updates old database without deleting data.
     private void runMigrations() {
         lock.writeLock().lock();
         try (Statement stmt = connection.createStatement()) {

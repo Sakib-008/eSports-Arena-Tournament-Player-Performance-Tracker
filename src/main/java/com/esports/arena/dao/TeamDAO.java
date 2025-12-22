@@ -37,8 +37,7 @@ public class TeamDAO {
         """;
 
         dbManager.getLock().writeLock().lock();
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql,
-                Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             pstmt.setString(1, team.getName());
             pstmt.setString(2, team.getTag());

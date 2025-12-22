@@ -61,54 +61,42 @@ public class OrganizerDashboardController {
 
     @FXML
     private void initialize() {
-        // Initialize DAOs and services
         teamDAO = new TeamDAO();
         playerDAO = new PlayerDAO();
         tournamentDAO = new TournamentDAO();
         matchDAO = new MatchDAO();
         jsonService = new JsonExportImportService();
-
-        // Initialize observable lists
         teamsData = FXCollections.observableArrayList();
-
-        // Initialize tab controllers
         initializeTabControllers();
-
-        // Load initial data
         loadAllData();
     }
 
     private void initializeTabControllers() {
         try {
-            // Teams Tab
             Tab teamsTab = mainTabPane.getTabs().get(0);
             FXMLLoader teamsLoader = new FXMLLoader(getClass().getResource("/fxml/tabs/TeamsTab.fxml"));
             teamsTab.setContent(teamsLoader.load());
             teamsTabController = teamsLoader.getController();
             teamsTabController.initialize(teamDAO, playerDAO);
 
-            // Players Tab
             Tab playersTab = mainTabPane.getTabs().get(1);
             FXMLLoader playersLoader = new FXMLLoader(getClass().getResource("/fxml/tabs/PlayersTab.fxml"));
             playersTab.setContent(playersLoader.load());
             playersTabController = playersLoader.getController();
             playersTabController.initialize(playerDAO, teamDAO, teamsData);
 
-            // Matches Tab (load first so we can pass reference to tournaments)
             Tab matchesTab = mainTabPane.getTabs().get(4);
             FXMLLoader matchesLoader = new FXMLLoader(getClass().getResource("/fxml/tabs/MatchesTab.fxml"));
             matchesTab.setContent(matchesLoader.load());
             matchesTabController = matchesLoader.getController();
             matchesTabController.initialize(matchDAO, teamDAO, playerDAO, teamsData);
 
-            // Tournaments Tab
             Tab tournamentsTab = mainTabPane.getTabs().get(2);
             FXMLLoader tournamentsLoader = new FXMLLoader(getClass().getResource("/fxml/tabs/TournamentsTab.fxml"));
             tournamentsTab.setContent(tournamentsLoader.load());
             tournamentsTabController = tournamentsLoader.getController();
             tournamentsTabController.initialize(tournamentDAO, matchDAO, teamDAO, teamsData, matchesTabController);
 
-            // Leaderboard Tab
             Tab leaderboardTab = mainTabPane.getTabs().get(3);
             FXMLLoader leaderboardLoader = new FXMLLoader(getClass().getResource("/fxml/tabs/LeaderboardTab.fxml"));
             leaderboardTab.setContent(leaderboardLoader.load());
@@ -123,7 +111,6 @@ public class OrganizerDashboardController {
     }
 
     private void loadAllData() {
-        // Load teams in background
         Task<List<Team>> loadTeamsTask = new Task<>() {
             @Override
             protected List<Team> call() {
@@ -173,8 +160,7 @@ public class OrganizerDashboardController {
                     JsonExportImportService.ExportData data = new JsonExportImportService.ExportData();
                     data.setPlayers(playerDAO.getAllPlayers());
                     data.setTeams(teamDAO.getAllTeams());
-                    return jsonService.exportAllDataAsync(data, file.getAbsolutePath())
-                            .join();
+                    return jsonService.exportAllDataAsync(data, file.getAbsolutePath()).join();
                 }
             };
 

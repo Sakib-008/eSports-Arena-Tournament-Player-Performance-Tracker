@@ -9,9 +9,9 @@ import com.esports.arena.dao.PlayerDAO;
 import com.esports.arena.model.Match;
 import com.esports.arena.model.PlayerMatchStats;
 
-/**
- * Service to calculate tournament-based statistics for players and teams
- */
+
+ // Service to calculate tournament-based statistics for players and teams
+
 public class TournamentStatsService {
     private final MatchDAO matchDAO;
     private final PlayerDAO playerDAO;
@@ -21,9 +21,6 @@ public class TournamentStatsService {
         this.playerDAO = new PlayerDAO();
     }
 
-    /**
-     * Get tournament statistics for a player
-     */
     public TournamentPlayerStats getPlayerTournamentStats(int playerId, int tournamentId) {
         TournamentPlayerStats stats = new TournamentPlayerStats();
         
@@ -65,9 +62,9 @@ public class TournamentStatsService {
         return stats;
     }
 
-    /**
-     * Get tournament statistics for a team
-     */
+
+     // Get tournament statistics for a team
+
     public TournamentTeamStats getTeamTournamentStats(int teamId, int tournamentId) {
         TournamentTeamStats stats = new TournamentTeamStats();
         
@@ -99,9 +96,9 @@ public class TournamentStatsService {
         return stats;
     }
 
-    /**
-     * Get all players' tournament stats
-     */
+
+    // Get all players' tournament stats
+
     public Map<Integer, TournamentPlayerStats> getAllPlayersTournamentStats(int tournamentId) {
         Map<Integer, TournamentPlayerStats> statsMap = new HashMap<>();
         List<com.esports.arena.model.Player> players = playerDAO.getAllPlayers();

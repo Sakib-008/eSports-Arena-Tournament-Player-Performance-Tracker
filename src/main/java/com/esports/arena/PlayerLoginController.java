@@ -46,7 +46,6 @@ public class PlayerLoginController {
         Task<Player> task = new Task<Player>() {
             @Override
             protected Player call() {
-                // Get player by username
                 Player player = playerDAO.getPlayerByUsername(user);
                 if (player != null && player.getPassword() != null && player.getPassword().equals(pass)) {
                     return player;
@@ -59,7 +58,6 @@ public class PlayerLoginController {
             loginBtn.setDisable(false);
             Player player = task.getValue();
             if (player != null) {
-                // Pass player to dashboard and show it
                 if (mainApp != null) {
                     mainApp.setCurrentPlayer(player);
                     mainApp.showPlayerDashboard();

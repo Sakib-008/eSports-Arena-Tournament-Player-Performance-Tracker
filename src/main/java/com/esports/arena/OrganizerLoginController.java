@@ -44,7 +44,6 @@ public class OrganizerLoginController {
         loginBtn.setDisable(true);
         helpLabel.setText("Authenticating...");
 
-        // Use async task for database authentication
         Task<Organizer> loginTask = new Task<>() {
             @Override
             protected Organizer call() {
@@ -75,7 +74,6 @@ public class OrganizerLoginController {
 
     @FXML
     private void handleCancel() {
-        // Return to main menu
         if (mainApp != null) mainApp.showMainMenu();
     }
 }

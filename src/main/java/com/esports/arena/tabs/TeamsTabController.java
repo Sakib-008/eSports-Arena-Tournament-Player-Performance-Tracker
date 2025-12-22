@@ -85,8 +85,7 @@ public class TeamsTabController {
             teamsData.setAll(loadTeamsTask.getValue());
         });
 
-        loadTeamsTask.setOnFailed(e ->
-                MainApp.showError("Error", "Failed to load teams"));
+        loadTeamsTask.setOnFailed(e -> MainApp.showError("Error", "Failed to load teams"));
 
         new Thread(loadTeamsTask).start();
     }

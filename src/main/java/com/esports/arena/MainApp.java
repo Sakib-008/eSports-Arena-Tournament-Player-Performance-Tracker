@@ -21,7 +21,6 @@ public class MainApp extends Application {
         this.primaryStage = stage;
         primaryStage.setTitle("eSports Arena - Tournament & Player Performance Tracker");
 
-        // Set consistent window size for all scenes
         primaryStage.setWidth(1200);
         primaryStage.setHeight(800);
         primaryStage.centerOnScreen();
@@ -75,7 +74,6 @@ public class MainApp extends Application {
 
             OrganizerDashboardController controller = loader.getController();
             controller.setMainApp(this);
-            // Inject MainApp into any tab controllers that need it
             controller.injectMainAppToTabs();
 
             primaryStage.setScene(scene);
@@ -93,6 +91,8 @@ public class MainApp extends Application {
 
             PlayerDashboardController controller = loader.getController();
             controller.setMainApp(this);
+            // inject main app into child tabs (they are loaded during controller.initialize)
+            controller.injectMainAppToTabs();
             if (currentPlayer != null) {
                 controller.setCurrentPlayer(currentPlayer);
                 // Refresh player data to get latest team assignment
@@ -154,7 +154,6 @@ public class MainApp extends Application {
 
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                // Close database connection
                 DatabaseManager.getInstance().close();
                 primaryStage.close();
                 System.exit(0);
