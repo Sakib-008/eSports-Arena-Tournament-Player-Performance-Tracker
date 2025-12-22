@@ -14,8 +14,6 @@
             <Label text="Player Dashboard" styleClass="dashboard-title"/>
             <HBox spacing="15" alignment="CENTER_LEFT">
                 <padding><Insets top="10"/></padding>
-                <Label text="Select Player:" style="-fx-text-fill: white;"/>
-                <ComboBox fx:id="playerSelectCombo" prefWidth="250"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Button fx:id="backToMenuBtn" text="Back to Menu"
                         onAction="#handleBackToMenu" styleClass="header-button"/>
@@ -91,27 +89,27 @@
                         <Separator/>
                         <GridPane hgap="30" vgap="15">
                             <VBox spacing="5" GridPane.columnIndex="0" GridPane.rowIndex="0">
-                                <Label text="Total Kills" styleClass="stat-label"/>
+                                <Label text="Total Kills" styleClass="stat-label" style="-fx-text-fill: #333333;"/>
                                 <Label fx:id="totalKillsLabel" text="0" styleClass="stat-value, stat-kills"/>
                             </VBox>
 
                             <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                                <Label text="Total Deaths" styleClass="stat-label"/>
+                                <Label text="Total Deaths" styleClass="stat-label" style="-fx-text-fill: #333333;"/>
                                 <Label fx:id="totalDeathsLabel" text="0" styleClass="stat-value, stat-deaths"/>
                             </VBox>
 
                             <VBox spacing="5" GridPane.columnIndex="2" GridPane.rowIndex="0">
-                                <Label text="Total Assists" styleClass="stat-label"/>
+                                <Label text="Total Assists" styleClass="stat-label" style="-fx-text-fill: #333333;"/>
                                 <Label fx:id="totalAssistsLabel" text="0" styleClass="stat-value, stat-assists"/>
                             </VBox>
 
                             <VBox spacing="5" GridPane.columnIndex="0" GridPane.rowIndex="1">
-                                <Label text="Matches Played" styleClass="stat-label"/>
+                                <Label text="Matches Played" styleClass="stat-label" style="-fx-text-fill: #333333;"/>
                                 <Label fx:id="matchesPlayedLabel" text="0" styleClass="stat-value"/>
                             </VBox>
 
                             <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                <Label text="Matches Won" styleClass="stat-label"/>
+                                <Label text="Matches Won" styleClass="stat-label" style="-fx-text-fill: #333333;"/>
                                 <Label fx:id="matchesWonLabel" text="0" styleClass="stat-value"/>
                             </VBox>
                         </GridPane>
@@ -130,6 +128,37 @@
                                 <NumberAxis fx:id="yAxis" label="Count"/>
                             </yAxis>
                         </BarChart>
+                    </VBox>
+
+                    <!-- Update Stats Card -->
+                    <VBox spacing="10" styleClass="card">
+                        <Label text="Record Match Stats" styleClass="card-title"/>
+                        <Separator/>
+                        <Label text="Enter stats from your latest match:" style="-fx-font-size: 12px;"/>
+                        <GridPane hgap="15" vgap="10">
+                            <Label text="Kills:" styleClass="grid-label"
+                                   GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                            <Spinner fx:id="killsSpinner" prefWidth="100"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+                            <Label text="Deaths:" styleClass="grid-label"
+                                   GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                            <Spinner fx:id="deathsSpinner" prefWidth="100"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+                            <Label text="Assists:" styleClass="grid-label"
+                                   GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                            <Spinner fx:id="assistsSpinner" prefWidth="100"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+
+                            <Label text="Match Won:" styleClass="grid-label"
+                                   GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                            <CheckBox fx:id="matchWonCheckBox"
+                                    GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+                        </GridPane>
+                        <Button fx:id="recordMatchBtn" text="Record Match Stats"
+                                onAction="#handleRecordMatch"
+                                styleClass="success-button" maxWidth="Infinity"/>
                     </VBox>
 
                 </VBox>

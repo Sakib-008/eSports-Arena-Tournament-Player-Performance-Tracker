@@ -1,16 +1,19 @@
 package com.esports.arena.dao;
 
-import com.esports.arena.database.DatabaseManager;
-import com.esports.arena.model.Tournament;
-import com.esports.arena.model.Team;
-
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import com.esports.arena.database.DatabaseManager;
+import com.esports.arena.model.Team;
+import com.esports.arena.model.Tournament;
 
 public class TournamentDAO {
     private final DatabaseManager dbManager;
@@ -58,7 +61,6 @@ public class TournamentDAO {
             }
         } catch (SQLException e) {
             System.err.println("Error creating tournament: " + e.getMessage());
-            e.printStackTrace();
         } finally {
             dbManager.getLock().writeLock().unlock();
         }

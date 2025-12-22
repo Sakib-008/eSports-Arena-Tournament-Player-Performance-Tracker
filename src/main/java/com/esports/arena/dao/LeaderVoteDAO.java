@@ -1,9 +1,9 @@
 package com.esports.arena.dao;
 
-import com.esports.arena.database.DatabaseManager;
-import com.esports.arena.model.LeaderVote;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +12,9 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import com.esports.arena.database.DatabaseManager;
+import com.esports.arena.model.LeaderVote;
 
 public class LeaderVoteDAO {
     private final DatabaseManager dbManager;
@@ -65,16 +68,13 @@ public class LeaderVoteDAO {
         } catch (SQLException e) {
             try {
                 conn.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
+            } catch (SQLException ignored) {
             }
             System.err.println("Error casting vote: " + e.getMessage());
-            e.printStackTrace();
         } finally {
             try {
                 conn.setAutoCommit(true);
-            } catch (SQLException e) {
-                e.printStackTrace();
+            } catch (SQLException ignored) {
             }
             dbManager.getLock().writeLock().unlock();
         }

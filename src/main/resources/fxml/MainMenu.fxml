@@ -18,11 +18,13 @@
     <Region VBox.vgrow="ALWAYS" />
 
     <VBox alignment="CENTER" prefWidth="500" spacing="30">
-        <Button fx:id="organizerButton" onAction="#handleOrganizerMode" prefHeight="80" prefWidth="450" styleClass="menu-button" text="Organizer Mode" style="-fx-font-size: 28px; -fx-padding: 25 50;"/>
+        <Button fx:id="organizerButton" onAction="#handleOrganizerMode" prefHeight="60" prefWidth="450" styleClass="menu-button" text="Organizer Mode" style="-fx-font-size: 22px; -fx-padding: 15 50;"/>
 
-        <Button fx:id="playerButton" onAction="#handlePlayerMode" prefHeight="80" prefWidth="450" styleClass="menu-button" text="Player/Team Mode" style="-fx-font-size: 28px; -fx-padding: 25 50;"/>
+        <Button fx:id="playerLoginButton" onAction="#handlePlayerLogin" prefHeight="60" prefWidth="450" styleClass="menu-button" text="Player Login" style="-fx-font-size: 22px; -fx-padding: 15 50;"/>
 
-        <Button fx:id="exitButton" onAction="#handleExit" prefHeight="70" prefWidth="450" styleClass="exit-button" text="Exit" style="-fx-font-size: 26px; -fx-padding: 20 50;"/>
+        <Button fx:id="playerSignupButton" onAction="#handlePlayerSignup" prefHeight="60" prefWidth="450" styleClass="menu-button" text="Player Signup" style="-fx-font-size: 22px; -fx-padding: 15 50;"/>
+
+        <Button fx:id="exitButton" onAction="#handleExit" prefHeight="60" prefWidth="450" styleClass="exit-button" text="Exit" style="-fx-font-size: 22px; -fx-padding: 15 50;"/>
     </VBox>
 
     <Region VBox.vgrow="ALWAYS" />

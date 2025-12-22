@@ -1,8 +1,9 @@
 package com.esports.arena.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 import java.util.Objects;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Player {
     @JsonProperty("id")
@@ -10,6 +11,9 @@ public class Player {
 
     @JsonProperty("username")
     private String username;
+
+    @JsonProperty("password")
+    private String password;
 
     @JsonProperty("realName")
     private String realName;
@@ -66,6 +70,9 @@ public class Player {
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
     public String getRealName() { return realName; }
     public void setRealName(String realName) { this.realName = realName; }
 
@@ -102,7 +109,6 @@ public class Player {
     public String getAvailabilityReason() { return availabilityReason; }
     public void setAvailabilityReason(String availabilityReason) { this.availabilityReason = availabilityReason; }
 
-    // Calculated properties
     public double getKdRatio() {
         return totalDeaths == 0 ? totalKills : (double) totalKills / totalDeaths;
     }

@@ -7,7 +7,8 @@ import javafx.scene.layout.VBox;
 public class MainMenuController {
     @FXML private VBox mainMenuContainer;
     @FXML private Button organizerButton;
-    @FXML private Button playerButton;
+    @FXML private Button playerLoginButton;
+    @FXML private Button playerSignupButton;
     @FXML private Button exitButton;
 
     private MainApp mainApp;
@@ -23,12 +24,17 @@ public class MainMenuController {
 
     @FXML
     private void handleOrganizerMode() {
-        mainApp.showOrganizerDashboard();
+        mainApp.showOrganizerLogin();
     }
 
     @FXML
-    private void handlePlayerMode() {
-        mainApp.showPlayerDashboard();
+    private void handlePlayerLogin() {
+        mainApp.showPlayerLogin();
+    }
+
+    @FXML
+    private void handlePlayerSignup() {
+        mainApp.showPlayerSignup();
     }
 
     @FXML

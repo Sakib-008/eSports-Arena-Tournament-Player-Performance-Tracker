@@ -6,6 +6,7 @@ module com.esports.arena.esportsarena {
     // Database
     requires java.sql;
     requires org.xerial.sqlitejdbc;
+    
 
     // JSON processing
     requires com.fasterxml.jackson.databind;

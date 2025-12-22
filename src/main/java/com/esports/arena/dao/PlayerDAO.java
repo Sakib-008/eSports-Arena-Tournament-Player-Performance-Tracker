@@ -1,15 +1,19 @@
 package com.esports.arena.dao;
 
-import com.esports.arena.database.DatabaseManager;
-import com.esports.arena.model.Player;
-
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import com.esports.arena.database.DatabaseManager;
+import com.esports.arena.model.Player;
 
 public class PlayerDAO {
     private final DatabaseManager dbManager;
@@ -26,9 +30,9 @@ public class PlayerDAO {
 
     public int createPlayer(Player player) {
         String sql = """
-            INSERT INTO players (username, real_name, email, team_id, role, join_date, 
+            INSERT INTO players (username, password, real_name, email, team_id, role, join_date, 
                                 available, availability_reason)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         dbManager.getLock().writeLock().lock();
@@ -36,17 +40,18 @@ public class PlayerDAO {
                 Statement.RETURN_GENERATED_KEYS)) {
 
             pstmt.setString(1, player.getUsername());
-            pstmt.setString(2, player.getRealName());
-            pstmt.setString(3, player.getEmail());
+            pstmt.setString(2, player.getPassword());
+            pstmt.setString(3, player.getRealName());
+            pstmt.setString(4, player.getEmail());
             if (player.getTeamId() != null) {
-                pstmt.setInt(4, player.getTeamId());
+                pstmt.setInt(5, player.getTeamId());
             } else {
-                pstmt.setNull(4, Types.INTEGER);
+                pstmt.setNull(5, Types.INTEGER);
             }
-            pstmt.setString(5, player.getRole());
-            pstmt.setString(6, player.getJoinDate().toString());
-            pstmt.setInt(7, player.isAvailable() ? 1 : 0);
-            pstmt.setString(8, player.getAvailabilityReason());
+            pstmt.setString(6, player.getRole());
+            pstmt.setString(7, player.getJoinDate().toString());
+            pstmt.setInt(8, player.isAvailable() ? 1 : 0);
+            pstmt.setString(9, player.getAvailabilityReason());
 
             pstmt.executeUpdate();
 
@@ -59,7 +64,6 @@ public class PlayerDAO {
             }
         } catch (SQLException e) {
             System.err.println("Error creating player: " + e.getMessage());
-            e.printStackTrace();
         } finally {
             dbManager.getLock().writeLock().unlock();
         }
@@ -83,6 +87,25 @@ public class PlayerDAO {
             }
         } catch (SQLException e) {
             System.err.println("Error getting player: " + e.getMessage());
+        } finally {
+            dbManager.getLock().readLock().unlock();
+        }
+        return null;
+    }
+
+    public Player getPlayerByUsername(String username) {
+        String sql = "SELECT * FROM players WHERE username = ?";
+
+        dbManager.getLock().readLock().lock();
+        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return extractPlayer(rs);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting player by username: " + e.getMessage());
         } finally {
             dbManager.getLock().readLock().unlock();
         }
@@ -163,7 +186,9 @@ public class PlayerDAO {
     public boolean updatePlayer(Player player) {
         String sql = """
             UPDATE players SET username = ?, real_name = ?, email = ?, team_id = ?, 
-                              role = ?, available = ?, availability_reason = ?
+                              role = ?, available = ?, availability_reason = ?,
+                              total_kills = ?, total_deaths = ?, total_assists = ?,
+                              matches_played = ?, matches_won = ?
             WHERE id = ?
         """;
 
@@ -180,7 +205,12 @@ public class PlayerDAO {
             pstmt.setString(5, player.getRole());
             pstmt.setInt(6, player.isAvailable() ? 1 : 0);
             pstmt.setString(7, player.getAvailabilityReason());
-            pstmt.setInt(8, player.getId());
+            pstmt.setInt(8, player.getTotalKills());
+            pstmt.setInt(9, player.getTotalDeaths());
+            pstmt.setInt(10, player.getTotalAssists());
+            pstmt.setInt(11, player.getMatchesPlayed());
+            pstmt.setInt(12, player.getMatchesWon());
+            pstmt.setInt(13, player.getId());
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -263,6 +293,7 @@ public class PlayerDAO {
         Player player = new Player();
         player.setId(rs.getInt("id"));
         player.setUsername(rs.getString("username"));
+        player.setPassword(rs.getString("password"));
         player.setRealName(rs.getString("real_name"));
         player.setEmail(rs.getString("email"));
 

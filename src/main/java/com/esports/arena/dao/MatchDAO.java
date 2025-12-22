@@ -1,16 +1,20 @@
 package com.esports.arena.dao;
 
-import com.esports.arena.database.DatabaseManager;
-import com.esports.arena.model.Match;
-import com.esports.arena.model.PlayerMatchStats;
-
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import com.esports.arena.database.DatabaseManager;
+import com.esports.arena.model.Match;
+import com.esports.arena.model.PlayerMatchStats;
 
 public class MatchDAO {
     private final DatabaseManager dbManager;
@@ -56,7 +60,6 @@ public class MatchDAO {
             }
         } catch (SQLException e) {
             System.err.println("Error creating match: " + e.getMessage());
-            e.printStackTrace();
         } finally {
             dbManager.getLock().writeLock().unlock();
         }

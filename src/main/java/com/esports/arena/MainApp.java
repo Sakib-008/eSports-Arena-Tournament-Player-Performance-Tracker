@@ -1,6 +1,10 @@
 package com.esports.arena;
 
+import java.io.IOException;
+
 import com.esports.arena.database.DatabaseManager;
+import com.esports.arena.model.Player;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -8,26 +12,23 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
 
-import java.io.IOException;
-
 public class MainApp extends Application {
     private Stage primaryStage;
+    private Player currentPlayer;
 
     @Override
     public void start(Stage stage) {
         this.primaryStage = stage;
         primaryStage.setTitle("eSports Arena - Tournament & Player Performance Tracker");
 
-        // Set fullscreen
-        primaryStage.setMaximized(true);
-        primaryStage.setFullScreen(false); // Use maximized instead of fullscreen for better control
+//        // Set fullscreen
+//        primaryStage.setMaximized(true);
+//        primaryStage.setFullScreen(false); // Use maximized instead of fullscreen for better control
 
-        // Show login/selection screen
         showMainMenu();
 
-        // Handle window close event
         primaryStage.setOnCloseRequest(event -> {
-            event.consume(); // Prevent immediate close
+            event.consume();
             handleExit();
         });
 
@@ -38,16 +39,30 @@ public class MainApp extends Application {
         try {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(getClass().getResource("/fxml/MainMenu.fxml"));
-            Scene scene = new Scene(loader.load(), 800, 600);
+            Scene scene = new Scene(loader.load(), 1200, 800);
 
-            // Pass MainApp reference to controller
             MainMenuController controller = loader.getController();
+            controller.setMainApp(this);
+            primaryStage.setScene(scene);
+        } catch (IOException e) {
+            System.err.println("Failed to load main menu: " + e.getMessage());
+            showError("Application Error", "Failed to load main menu: " + e.getMessage());
+        }
+    }
+
+    public void showOrganizerLogin() {
+        try {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(getClass().getResource("/fxml/OrganizerLogin.fxml"));
+            Scene scene = new Scene(loader.load(), 1200, 800);
+
+            OrganizerLoginController controller = loader.getController();
             controller.setMainApp(this);
 
             primaryStage.setScene(scene);
         } catch (IOException e) {
-            e.printStackTrace();
-            showError("Application Error", "Failed to load main menu: " + e.getMessage());
+            System.err.println("Failed to load organizer login: " + e.getMessage());
+            showError("Application Error", "Failed to load organizer login: " + e.getMessage());
         }
     }
 
@@ -62,7 +77,7 @@ public class MainApp extends Application {
 
             primaryStage.setScene(scene);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Failed to load organizer dashboard: " + e.getMessage());
             showError("Application Error", "Failed to load organizer dashboard: " + e.getMessage());
         }
     }
@@ -75,12 +90,55 @@ public class MainApp extends Application {
 
             PlayerDashboardController controller = loader.getController();
             controller.setMainApp(this);
+            if (currentPlayer != null) {
+                controller.setCurrentPlayer(currentPlayer);
+            }
 
             primaryStage.setScene(scene);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Failed to load player dashboard: " + e.getMessage());
             showError("Application Error", "Failed to load player dashboard: " + e.getMessage());
         }
+    }
+
+    public void showPlayerLogin() {
+        try {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(getClass().getResource("/fxml/PlayerLogin.fxml"));
+            Scene scene = new Scene(loader.load(), 1200, 800);
+
+            PlayerLoginController controller = loader.getController();
+            controller.setMainApp(this);
+
+            primaryStage.setScene(scene);
+        } catch (IOException e) {
+            System.err.println("Failed to load player login: " + e.getMessage());
+            showError("Application Error", "Failed to load player login: " + e.getMessage());
+        }
+    }
+
+    public void showPlayerSignup() {
+        try {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(getClass().getResource("/fxml/PlayerSignup.fxml"));
+            Scene scene = new Scene(loader.load(), 1200, 800);
+
+            PlayerSignupController controller = loader.getController();
+            controller.setMainApp(this);
+
+            primaryStage.setScene(scene);
+        } catch (IOException e) {
+            System.err.println("Failed to load player signup: " + e.getMessage());
+            showError("Application Error", "Failed to load player signup: " + e.getMessage());
+        }
+    }
+
+    public Player getCurrentPlayer() {
+        return currentPlayer;
+    }
+
+    public void setCurrentPlayer(Player player) {
+        this.currentPlayer = player;
     }
 
     private void handleExit() {

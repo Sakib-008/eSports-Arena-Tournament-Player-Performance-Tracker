@@ -1,26 +1,42 @@
 package com.esports.arena;
 
-import com.esports.arena.dao.*;
-import com.esports.arena.model.*;
-import javafx.application.Platform;
+import java.util.List;
+import java.util.Map;
+
+import com.esports.arena.dao.LeaderVoteDAO;
+import com.esports.arena.dao.PlayerDAO;
+import com.esports.arena.dao.TeamDAO;
+import com.esports.arena.model.Player;
+import com.esports.arena.model.Team;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.scene.chart.*;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.ToggleButton;
+@SuppressWarnings("unused")
 public class PlayerDashboardController {
     // Tab Pane
     @FXML private TabPane playerTabPane;
 
     // Header
-    @FXML private ComboBox<Player> playerSelectCombo;
     @FXML private Button backToMenuBtn;
 
     // Profile Tab
@@ -42,6 +58,10 @@ public class PlayerDashboardController {
     @FXML private BarChart<String, Number> performanceChart;
     @FXML private CategoryAxis xAxis;
     @FXML private NumberAxis yAxis;
+    @FXML private Spinner<Integer> killsSpinner;
+    @FXML private Spinner<Integer> deathsSpinner;
+    @FXML private Spinner<Integer> assistsSpinner;
+    @FXML private CheckBox matchWonCheckBox;
 
     // Team Tab
     @FXML private Label myTeamNameLabel;
@@ -72,6 +92,10 @@ public class PlayerDashboardController {
         this.mainApp = mainApp;
     }
 
+    public void setCurrentPlayer(Player player) {
+        this.currentPlayer = player;
+    }
+
     @FXML
     private void initialize() {
         playerDAO = new PlayerDAO();
@@ -82,45 +106,16 @@ public class PlayerDashboardController {
         teamMembers = FXCollections.observableArrayList();
         voteCandidates = FXCollections.observableArrayList();
 
-        setupPlayerSelection();
         setupAvailabilityToggle();
         setupListViews();
+    setupStatsInputs();
 
         loadAllPlayers();
-    }
 
-    private void setupPlayerSelection() {
-        playerSelectCombo.setItems(allPlayers);
-        playerSelectCombo.setCellFactory(param -> new ListCell<>() {
-            @Override
-            protected void updateItem(Player item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getUsername() + " - " + item.getRealName());
-                }
-            }
-        });
-
-        playerSelectCombo.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(Player item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText("Select Player");
-                } else {
-                    setText(item.getUsername());
-                }
-            }
-        });
-
-        playerSelectCombo.getSelectionModel().selectedItemProperty().addListener(
-                (obs, oldVal, newVal) -> {
-                    if (newVal != null) {
-                        loadPlayerData(newVal);
-                    }
-                });
+        // If currentPlayer was set from login, display it
+        if (currentPlayer != null) {
+            loadPlayerData(currentPlayer);
+        }
     }
 
     private void setupAvailabilityToggle() {
@@ -179,9 +174,6 @@ public class PlayerDashboardController {
 
         task.setOnSucceeded(e -> {
             allPlayers.setAll(task.getValue());
-            if (!allPlayers.isEmpty()) {
-                playerSelectCombo.getSelectionModel().selectFirst();
-            }
         });
 
         task.setOnFailed(e ->
@@ -461,7 +453,8 @@ public class PlayerDashboardController {
         votesCol.setCellValueFactory(cellData ->
                 javafx.beans.binding.Bindings.createIntegerBinding(() -> cellData.getValue().votes).asObject());
 
-        resultsTable.getColumns().addAll(nameCol, votesCol);
+        resultsTable.getColumns().add(nameCol);
+        resultsTable.getColumns().add(votesCol);
 
         Task<Map<Integer, Integer>> task = new Task<>() {
             @Override
@@ -504,6 +497,66 @@ public class PlayerDashboardController {
         });
     }
 
+    private void setupStatsInputs() {
+        if (killsSpinner != null) {
+            killsSpinner.setValueFactory(new javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory(0, 1000, 0));
+        }
+        if (deathsSpinner != null) {
+            deathsSpinner.setValueFactory(new javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory(0, 1000, 0));
+        }
+        if (assistsSpinner != null) {
+            assistsSpinner.setValueFactory(new javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory(0, 1000, 0));
+        }
+        if (matchWonCheckBox != null) {
+            matchWonCheckBox.setSelected(false);
+        }
+    }
+
+    @FXML
+    private void handleRecordMatch() {
+        if (currentPlayer == null) {
+            MainApp.showError("Error", "No player selected");
+            return;
+        }
+
+        Integer kVal = killsSpinner != null ? killsSpinner.getValue() : null;
+        Integer dVal = deathsSpinner != null ? deathsSpinner.getValue() : null;
+        Integer aVal = assistsSpinner != null ? assistsSpinner.getValue() : null;
+        int kills = kVal == null ? 0 : kVal;
+        int deaths = dVal == null ? 0 : dVal;
+        int assists = aVal == null ? 0 : aVal;
+        boolean won = matchWonCheckBox != null && matchWonCheckBox.isSelected();
+
+        Task<Boolean> updateTask = new Task<>() {
+            @Override
+            protected Boolean call() {
+                return playerDAO.updatePlayerStats(currentPlayer.getId(), kills, deaths, assists, won);
+            }
+        };
+
+        updateTask.setOnSucceeded(e -> {
+            if (updateTask.getValue()) {
+                MainApp.showInfo("Success", "Match stats recorded successfully!");
+                if (killsSpinner != null) killsSpinner.getValueFactory().setValue(0);
+                if (deathsSpinner != null) deathsSpinner.getValueFactory().setValue(0);
+                if (assistsSpinner != null) assistsSpinner.getValueFactory().setValue(0);
+                if (matchWonCheckBox != null) matchWonCheckBox.setSelected(false);
+
+                Player updatedPlayer = playerDAO.getPlayerById(currentPlayer.getId());
+                if (updatedPlayer != null) {
+                    loadPlayerData(updatedPlayer);
+                }
+            } else {
+                MainApp.showError("Error", "Failed to record match stats");
+            }
+        });
+
+        updateTask.setOnFailed(e ->
+                MainApp.showError("Error", "Failed to record match stats: " + updateTask.getException().getMessage()));
+
+        new Thread(updateTask).start();
+    }
+
     // Helper class for displaying vote results
     private static class VoteResultDisplay {
         String name;
@@ -514,4 +567,5 @@ public class PlayerDashboardController {
             this.votes = votes;
         }
     }
+
 }

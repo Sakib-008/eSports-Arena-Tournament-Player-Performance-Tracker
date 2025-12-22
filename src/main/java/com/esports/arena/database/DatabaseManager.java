@@ -1,6 +1,9 @@
 package com.esports.arena.database;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class DatabaseManager {
@@ -24,10 +27,43 @@ public class DatabaseManager {
         try {
             connection = DriverManager.getConnection(DB_URL);
             createTables();
+            runMigrations();
             System.out.println("Database initialized successfully");
         } catch (SQLException e) {
             System.err.println("Database initialization failed: " + e.getMessage());
-            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Run lightweight migrations to add missing columns introduced in newer versions.
+     */
+    private void runMigrations() {
+        lock.writeLock().lock();
+        try (Statement stmt = connection.createStatement()) {
+            // Ensure players table has a password column (older DBs might not)
+            boolean hasPassword = false;
+            try (java.sql.ResultSet rs = stmt.executeQuery("PRAGMA table_info(players);")) {
+                while (rs.next()) {
+                    String col = rs.getString("name");
+                    if ("password".equalsIgnoreCase(col)) {
+                        hasPassword = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!hasPassword) {
+                try {
+                    stmt.execute("ALTER TABLE players ADD COLUMN password TEXT;");
+                    System.out.println("Migration: added 'password' column to players table");
+                } catch (SQLException ex) {
+                    System.err.println("Migration failed to add password column: " + ex.getMessage());
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Migration check failed: " + e.getMessage());
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
@@ -54,6 +90,7 @@ public class DatabaseManager {
                 CREATE TABLE IF NOT EXISTS players (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     username TEXT NOT NULL UNIQUE,
+                    password TEXT,
                     real_name TEXT,
                     email TEXT UNIQUE,
                     team_id INTEGER,

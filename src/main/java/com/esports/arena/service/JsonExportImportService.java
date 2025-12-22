@@ -1,16 +1,20 @@
 package com.esports.arena.service;
 
-import com.esports.arena.model.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import com.esports.arena.model.Match;
+import com.esports.arena.model.Player;
+import com.esports.arena.model.PlayerMatchStats;
+import com.esports.arena.model.Team;
+import com.esports.arena.model.Tournament;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 public class JsonExportImportService {
     private final ObjectMapper objectMapper;
@@ -59,7 +63,6 @@ public class JsonExportImportService {
                 return true;
             } catch (IOException e) {
                 System.err.println("Error exporting data: " + e.getMessage());
-                e.printStackTrace();
                 return false;
             }
         }, executor);
@@ -113,7 +116,6 @@ public class JsonExportImportService {
                 return data;
             } catch (IOException e) {
                 System.err.println("Error importing data: " + e.getMessage());
-                e.printStackTrace();
                 return null;
             }
         }, executor);

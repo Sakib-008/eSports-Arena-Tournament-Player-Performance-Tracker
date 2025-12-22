@@ -1,26 +1,47 @@
 package com.esports.arena;
 
-import com.esports.arena.dao.*;
-import com.esports.arena.model.*;
+import java.io.File;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+import com.esports.arena.dao.MatchDAO;
+import com.esports.arena.dao.PlayerDAO;
+import com.esports.arena.dao.TeamDAO;
+import com.esports.arena.dao.TournamentDAO;
+import com.esports.arena.model.Match;
+import com.esports.arena.model.Player;
+import com.esports.arena.model.Team;
+import com.esports.arena.model.Tournament;
 import com.esports.arena.service.JsonExportImportService;
-import javafx.application.Platform;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-
-import java.io.File;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Optional;
 
 public class OrganizerDashboardController {
     // Tab Pane
@@ -48,7 +69,6 @@ public class OrganizerDashboardController {
     @FXML private TableColumn<Player, Integer> playerKillsCol;
     @FXML private TableColumn<Player, Integer> playerDeathsCol;
     @FXML private TableColumn<Player, Double> playerKDCol;
-    @FXML private Button addPlayerBtn;
     @FXML private Button editPlayerBtn;
     @FXML private Button deletePlayerBtn;
     @FXML private Button assignTeamBtn;
@@ -457,79 +477,6 @@ public class OrganizerDashboardController {
     }
 
     @FXML
-    private void handleAddPlayer() {
-        Dialog<Player> dialog = new Dialog<>();
-        dialog.setTitle("Add Player");
-        dialog.setHeaderText("Create New Player");
-
-        ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-
-        TextField usernameField = new TextField();
-        usernameField.setPromptText("Username");
-        TextField realNameField = new TextField();
-        realNameField.setPromptText("Real Name");
-        TextField emailField = new TextField();
-        emailField.setPromptText("Email");
-        TextField roleField = new TextField();
-        roleField.setPromptText("Role");
-
-        grid.add(new Label("Username:"), 0, 0);
-        grid.add(usernameField, 1, 0);
-        grid.add(new Label("Real Name:"), 0, 1);
-        grid.add(realNameField, 1, 1);
-        grid.add(new Label("Email:"), 0, 2);
-        grid.add(emailField, 1, 2);
-        grid.add(new Label("Role:"), 0, 3);
-        grid.add(roleField, 1, 3);
-
-        dialog.getDialogPane().setContent(grid);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == saveButtonType) {
-                Player player = new Player(
-                        usernameField.getText(),
-                        realNameField.getText(),
-                        emailField.getText(),
-                        roleField.getText()
-                );
-                return player;
-            }
-            return null;
-        });
-
-        Optional<Player> result = dialog.showAndWait();
-        result.ifPresent(this::savePlayer);
-    }
-
-    private void savePlayer(Player player) {
-        Task<Integer> saveTask = new Task<>() {
-            @Override
-            protected Integer call() {
-                return playerDAO.createPlayer(player);
-            }
-        };
-
-        saveTask.setOnSucceeded(e -> {
-            if (saveTask.getValue() > 0) {
-                MainApp.showInfo("Success", "Player created successfully");
-                loadAllData();
-            } else {
-                MainApp.showError("Error", "Failed to create player");
-            }
-        });
-
-        saveTask.setOnFailed(e ->
-                MainApp.showError("Error", "Failed to create player"));
-
-        new Thread(saveTask).start();
-    }
-
-    @FXML
     private void handleEditPlayer() {
         Player selected = playersTable.getSelectionModel().getSelectedItem();
         if (selected != null) {
@@ -585,6 +532,13 @@ public class OrganizerDashboardController {
         CheckBox availableCheckBox = new CheckBox("Available");
         availableCheckBox.setSelected(player.isAvailable());
 
+        // Stats fields
+        TextField killsField = new TextField(String.valueOf(player.getTotalKills()));
+        TextField deathsField = new TextField(String.valueOf(player.getTotalDeaths()));
+        TextField assistsField = new TextField(String.valueOf(player.getTotalAssists()));
+        TextField matchesPlayedField = new TextField(String.valueOf(player.getMatchesPlayed()));
+        TextField matchesWonField = new TextField(String.valueOf(player.getMatchesWon()));
+
         grid.add(new Label("Username:"), 0, 0);
         grid.add(usernameField, 1, 0);
         grid.add(new Label("Real Name:"), 0, 1);
@@ -597,6 +551,17 @@ public class OrganizerDashboardController {
         grid.add(teamCombo, 1, 4);
         grid.add(new Label("Status:"), 0, 5);
         grid.add(availableCheckBox, 1, 5);
+        grid.add(new Separator(), 0, 6);
+        grid.add(new Label("Total Kills:"), 0, 7);
+        grid.add(killsField, 1, 7);
+        grid.add(new Label("Total Deaths:"), 0, 8);
+        grid.add(deathsField, 1, 8);
+        grid.add(new Label("Total Assists:"), 0, 9);
+        grid.add(assistsField, 1, 9);
+        grid.add(new Label("Matches Played:"), 0, 10);
+        grid.add(matchesPlayedField, 1, 10);
+        grid.add(new Label("Matches Won:"), 0, 11);
+        grid.add(matchesWonField, 1, 11);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -610,6 +575,18 @@ public class OrganizerDashboardController {
 
                 Team selectedTeam = teamCombo.getValue();
                 player.setTeamId(selectedTeam != null ? selectedTeam.getId() : null);
+
+                // Parse and set stats
+                try {
+                    player.setTotalKills(Integer.parseInt(killsField.getText()));
+                    player.setTotalDeaths(Integer.parseInt(deathsField.getText()));
+                    player.setTotalAssists(Integer.parseInt(assistsField.getText()));
+                    player.setMatchesPlayed(Integer.parseInt(matchesPlayedField.getText()));
+                    player.setMatchesWon(Integer.parseInt(matchesWonField.getText()));
+                } catch (NumberFormatException e) {
+                    MainApp.showError("Invalid Input", "Please enter valid numbers for stats");
+                    return null;
+                }
 
                 return player;
             }
@@ -791,7 +768,7 @@ public class OrganizerDashboardController {
         TextField nameField = new TextField();
         nameField.setPromptText("Tournament Name");
         TextField gameField = new TextField();
-        gameField.setPromptText("Game (e.g., League of Legends)");
+        gameField.setPromptText("Game (e.g., VALORANT)");
         ComboBox<String> formatCombo = new ComboBox<>();
         formatCombo.getItems().addAll("Single Elimination", "Double Elimination", "Round Robin");
         formatCombo.setValue("Single Elimination");
@@ -892,7 +869,194 @@ public class OrganizerDashboardController {
 
     @FXML
     private void handleViewMatchDetails() {
-        MainApp.showInfo("Coming Soon", "Match details view will be implemented");
+        Match selected = matchesTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            MainApp.showError("No Selection", "Please select a match to view details");
+            return;
+        }
+
+        // Refresh match from DB to ensure latest player stats
+        Match match = matchDAO.getMatchById(selected.getId());
+        if (match == null) {
+            MainApp.showError("Error", "Failed to load match details");
+            return;
+        }
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Match Details - " + match.getId());
+        dialog.setHeaderText("Match Details and Player Stats");
+
+        ButtonType finalizeButtonType = new ButtonType("Finalize Match", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(finalizeButtonType, ButtonType.CLOSE);
+
+        VBox content = new VBox(12);
+        content.setPrefWidth(700);
+
+        Team team1 = teamDAO.getTeamById(match.getTeam1Id());
+        Team team2 = teamDAO.getTeamById(match.getTeam2Id());
+
+        Label teamsLabel = new Label((team1 != null ? team1.getName() : "Team 1") + " vs " + (team2 != null ? team2.getName() : "Team 2"));
+        teamsLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+
+        HBox scoreBox = new HBox(10);
+        TextField team1ScoreField = new TextField(String.valueOf(match.getTeam1Score()));
+        team1ScoreField.setPrefWidth(80);
+        TextField team2ScoreField = new TextField(String.valueOf(match.getTeam2Score()));
+        team2ScoreField.setPrefWidth(80);
+
+        scoreBox.getChildren().addAll(new Label(team1 != null ? team1.getName() : "Team 1"), team1ScoreField,
+                new Label("-"), team2ScoreField, new Label(team2 != null ? team2.getName() : "Team 2"));
+
+        content.getChildren().addAll(teamsLabel, scoreBox, new Separator());
+
+        // Load players for both teams and allow entering stats
+        List<Player> playersTeam1 = playerDAO.getPlayersByTeam(match.getTeam1Id());
+        List<Player> playersTeam2 = playerDAO.getPlayersByTeam(match.getTeam2Id());
+
+        VBox playersContainer = new VBox(10);
+
+        // Helper to create a grid of inputs per player
+        class PlayerInputs {
+            int playerId;
+            TextField kills = new TextField("0");
+            TextField deaths = new TextField("0");
+            TextField assists = new TextField("0");
+        }
+
+        List<PlayerInputs> inputs = new java.util.ArrayList<>();
+
+        if (!playersTeam1.isEmpty()) {
+            playersContainer.getChildren().add(new Label("" + (team1 != null ? team1.getName() : "Team 1") + " Players"));
+            for (Player p : playersTeam1) {
+                PlayerInputs pi = new PlayerInputs();
+                pi.playerId = p.getId();
+                HBox row = new HBox(8);
+                row.getChildren().addAll(new Label(p.getUsername()), new Label("Kills:"), pi.kills,
+                        new Label("Deaths:"), pi.deaths, new Label("Assists:"), pi.assists);
+                playersContainer.getChildren().add(row);
+                inputs.add(pi);
+            }
+        }
+
+        if (!playersTeam2.isEmpty()) {
+            playersContainer.getChildren().add(new Label("" + (team2 != null ? team2.getName() : "Team 2") + " Players"));
+            for (Player p : playersTeam2) {
+                PlayerInputs pi = new PlayerInputs();
+                pi.playerId = p.getId();
+                HBox row = new HBox(8);
+                row.getChildren().addAll(new Label(p.getUsername()), new Label("Kills:"), pi.kills,
+                        new Label("Deaths:"), pi.deaths, new Label("Assists:"), pi.assists);
+                playersContainer.getChildren().add(row);
+                inputs.add(pi);
+            }
+        }
+
+        ScrollPane scroll = new ScrollPane(playersContainer);
+        scroll.setFitToWidth(true);
+        scroll.setPrefHeight(300);
+
+        content.getChildren().add(scroll);
+
+        dialog.getDialogPane().setContent(content);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == finalizeButtonType) {
+                // Parse scores
+                int s1 = 0, s2 = 0;
+                try {
+                    s1 = Integer.parseInt(team1ScoreField.getText().trim());
+                    s2 = Integer.parseInt(team2ScoreField.getText().trim());
+                } catch (NumberFormatException e) {
+                    MainApp.showError("Invalid Input", "Please enter valid integer scores");
+                    return null;
+                }
+
+                int finalS1 = s1, finalS2 = s2;
+
+                // Run DB updates in background
+                Task<Void> task = new Task<>() {
+                    @Override
+                    protected Void call() {
+                        // Update match scores and status
+                        match.setTeam1Score(finalS1);
+                        match.setTeam2Score(finalS2);
+                        if (match.getActualStartTime() == null) {
+                            match.setActualStartTime(java.time.LocalDateTime.now());
+                        }
+                        match.setActualEndTime(java.time.LocalDateTime.now());
+
+                        Integer winnerId = null;
+                        if (finalS1 > finalS2) {
+                            winnerId = match.getTeam1Id();
+                        } else if (finalS2 > finalS1) {
+                            winnerId = match.getTeam2Id();
+                        }
+                        match.setWinnerId(winnerId);
+                        match.setStatus(Match.MatchStatus.COMPLETED);
+
+                        matchDAO.updateMatch(match);
+
+                        // Update team records
+                        if (winnerId == null) {
+                            teamDAO.updateTeamRecord(match.getTeam1Id(), false, true);
+                            teamDAO.updateTeamRecord(match.getTeam2Id(), false, true);
+                        } else if (winnerId.equals(match.getTeam1Id())) {
+                            teamDAO.updateTeamRecord(match.getTeam1Id(), true, false);
+                            teamDAO.updateTeamRecord(match.getTeam2Id(), false, false);
+                        } else {
+                            teamDAO.updateTeamRecord(match.getTeam2Id(), true, false);
+                            teamDAO.updateTeamRecord(match.getTeam1Id(), false, false);
+                        }
+
+                        // For each player input, insert player_match_stats and update aggregated player stats
+                        for (PlayerInputs pi : inputs) {
+                            int kills = 0, deaths = 0, assists = 0;
+                            try {
+                                kills = Integer.parseInt(pi.kills.getText().trim());
+                                deaths = Integer.parseInt(pi.deaths.getText().trim());
+                                assists = Integer.parseInt(pi.assists.getText().trim());
+                            } catch (NumberFormatException ignored) {
+                            }
+
+                            com.esports.arena.model.PlayerMatchStats stats = new com.esports.arena.model.PlayerMatchStats();
+                            stats.setMatchId(match.getId());
+                            stats.setPlayerId(pi.playerId);
+                            stats.setKills(kills);
+                            stats.setDeaths(deaths);
+                            stats.setAssists(assists);
+
+                            // determine if player's team won
+                            boolean playerWon = false;
+                            // find player's team id
+                            com.esports.arena.model.Player p = playerDAO.getPlayerById(pi.playerId);
+                            if (p != null && p.getTeamId() != null && winnerId != null) {
+                                playerWon = p.getTeamId().equals(winnerId);
+                            }
+
+                            matchDAO.addPlayerStats(stats);
+                            playerDAO.updatePlayerStats(pi.playerId, kills, deaths, assists, playerWon);
+                        }
+
+                        return null;
+                    }
+                };
+
+                task.setOnSucceeded(e -> {
+                    MainApp.showInfo("Success", "Match finalized and stats recorded");
+                    loadAllData();
+                });
+
+                task.setOnFailed(e -> {
+                    MainApp.showError("Error", "Failed to finalize match: " + task.getException().getMessage());
+                });
+
+                new Thread(task).start();
+
+            }
+            return null;
+        });
+
+        dialog.showAndWait();
     }
 
     // Helper class
@@ -979,6 +1143,43 @@ public class OrganizerDashboardController {
             return;
         }
 
+        // Show dialog to add teams to tournament
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Manage Tournament: " + selected.getName());
+        dialog.setHeaderText("Add/Remove Teams");
+
+        ButtonType addButtonType = new ButtonType("Add Teams", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CLOSE);
+
+        VBox content = new VBox(10);
+        Label label = new Label("Select teams to add to this tournament:");
+        ListView<Team> teamsList = new ListView<>();
+        teamsList.setItems(teamsData);
+        teamsList.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.MULTIPLE);
+
+        content.getChildren().addAll(label, teamsList);
+        dialog.getDialogPane().setContent(content);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == addButtonType) {
+                // Add selected teams to tournament
+                for (Team team : teamsList.getSelectionModel().getSelectedItems()) {
+                    Task<Boolean> addTask = new Task<>() {
+                        @Override
+                        protected Boolean call() {
+                            // Implement tournament-team relationship if DAO exists
+                            return true;
+                        }
+                    };
+                    new Thread(addTask).start();
+                }
+            }
+            return null;
+        });
+
+        dialog.showAndWait();
+
+        // Load matches for tournament
         Task<List<Match>> task = new Task<>() {
             @Override
             protected List<Match> call() {

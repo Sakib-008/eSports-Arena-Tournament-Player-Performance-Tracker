@@ -27,7 +27,6 @@
     <center>
         <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE">
 
-            <!-- Teams Tab -->
             <Tab text="Teams">
                 <BorderPane>
                     <center>
@@ -57,7 +56,6 @@
                 </BorderPane>
             </Tab>
 
-            <!-- Players Tab -->
             <Tab text="Players">
                 <BorderPane>
                     <center>
@@ -75,8 +73,6 @@
                     </center>
                     <bottom>
                         <HBox spacing="10" style="-fx-padding: 10;">
-                            <Button fx:id="addPlayerBtn" text="Add Player"
-                                    onAction="#handleAddPlayer" styleClass="primary-button"/>
                             <Button fx:id="editPlayerBtn" text="Edit Player"
                                     onAction="#handleEditPlayer" styleClass="primary-button"/>
                             <Button fx:id="deletePlayerBtn" text="Delete Player"
@@ -88,7 +84,6 @@
                 </BorderPane>
             </Tab>
 
-            <!-- Tournaments Tab -->
             <Tab text="Tournaments">
                 <SplitPane dividerPositions="0.3">
                     <ListView fx:id="tournamentsList"/>
@@ -125,7 +120,6 @@
                 </SplitPane>
             </Tab>
 
-            <!-- Leaderboard Tab -->
             <Tab text="Leaderboard">
                 <BorderPane>
                     <center>
@@ -148,7 +142,6 @@
                 </BorderPane>
             </Tab>
 
-            <!-- Matches Tab -->
             <Tab text="Matches">
                 <BorderPane>
                     <center>

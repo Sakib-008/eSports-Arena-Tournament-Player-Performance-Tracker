@@ -1,11 +1,14 @@
 package com.esports.arena.util;
 
-import com.esports.arena.dao.*;
-import com.esports.arena.model.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
+
+import com.esports.arena.dao.LeaderVoteDAO;
+import com.esports.arena.dao.PlayerDAO;
+import com.esports.arena.dao.TeamDAO;
+import com.esports.arena.model.Player;
+import com.esports.arena.model.Team;
+import com.esports.arena.model.Tournament;
 
 /**
  * Utility class to generate sample data for testing and demonstration
@@ -74,7 +77,6 @@ public class SampleDataGenerator {
 
         } catch (Exception e) {
             System.err.println("❌ Error generating sample data: " + e.getMessage());
-            e.printStackTrace();
         } finally {
             shutdown();
         }
@@ -118,6 +120,8 @@ public class SampleDataGenerator {
             String role = ROLES[random.nextInt(ROLES.length)];
 
             Player player = new Player(username, realName, email, role);
+            // Set default password for sample players
+            player.setPassword("password123");
             player.setTeamId(teamId);
 
             // Add some statistics
