@@ -15,9 +15,11 @@ module com.esports.arena.esportsarena {
 
     // Export packages to JavaFX
     opens com.esports.arena to javafx.fxml;
+    opens com.esports.arena.tabs to javafx.fxml;
     opens com.esports.arena.model to javafx.base, com.fasterxml.jackson.databind;
 
     exports com.esports.arena;
+    exports com.esports.arena.tabs;
     exports com.esports.arena.model;
     exports com.esports.arena.dao;
     exports com.esports.arena.database;

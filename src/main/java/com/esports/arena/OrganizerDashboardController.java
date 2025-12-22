@@ -1,112 +1,45 @@
 package com.esports.arena;
 
 import java.io.File;
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import com.esports.arena.dao.MatchDAO;
 import com.esports.arena.dao.PlayerDAO;
 import com.esports.arena.dao.TeamDAO;
 import com.esports.arena.dao.TournamentDAO;
 import com.esports.arena.model.Match;
-import com.esports.arena.model.Player;
 import com.esports.arena.model.Team;
-import com.esports.arena.model.Tournament;
 import com.esports.arena.service.JsonExportImportService;
+import com.esports.arena.tabs.LeaderboardTabController;
+import com.esports.arena.tabs.MatchesTabController;
+import com.esports.arena.tabs.PlayersTabController;
+import com.esports.arena.tabs.TeamsTabController;
+import com.esports.arena.tabs.TournamentsTabController;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Separator;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
 public class OrganizerDashboardController {
-    // Tab Pane
     @FXML private TabPane mainTabPane;
-
-    // Teams Tab
-    @FXML private TableView<Team> teamsTable;
-    @FXML private TableColumn<Team, String> teamNameCol;
-    @FXML private TableColumn<Team, String> teamTagCol;
-    @FXML private TableColumn<Team, String> teamRegionCol;
-    @FXML private TableColumn<Team, Integer> teamWinsCol;
-    @FXML private TableColumn<Team, Integer> teamLossesCol;
-    @FXML private TableColumn<Team, Double> teamWinRateCol;
-    @FXML private Button addTeamBtn;
-    @FXML private Button editTeamBtn;
-    @FXML private Button deleteTeamBtn;
-    @FXML private Button viewTeamPlayersBtn;
-
-    // Players Tab
-    @FXML private TableView<Player> playersTable;
-    @FXML private TableColumn<Player, String> playerUsernameCol;
-    @FXML private TableColumn<Player, String> playerRealNameCol;
-    @FXML private TableColumn<Player, String> playerRoleCol;
-    @FXML private TableColumn<Player, String> playerAvailabilityCol;
-    @FXML private TableColumn<Player, Integer> playerKillsCol;
-    @FXML private TableColumn<Player, Integer> playerDeathsCol;
-    @FXML private TableColumn<Player, Double> playerKDCol;
-    @FXML private Button editPlayerBtn;
-    @FXML private Button deletePlayerBtn;
-    @FXML private Button assignTeamBtn;
-
-    // Tournaments Tab
-    @FXML private ListView<Tournament> tournamentsList;
-    @FXML private Label tournamentNameLabel;
-    @FXML private Label tournamentGameLabel;
-    @FXML private Label tournamentStatusLabel;
-    @FXML private Label tournamentPrizeLabel;
-    @FXML private Button createTournamentBtn;
-    @FXML private Button startTournamentBtn;
-    @FXML private Button viewMatchesBtn;
-
-    // Leaderboard Tab
-    @FXML private TableView<Team> leaderboardTable;
-    @FXML private TableColumn<Team, Integer> lbRankCol;
-    @FXML private TableColumn<Team, String> lbTeamCol;
-    @FXML private TableColumn<Team, Integer> lbWinsCol;
-    @FXML private TableColumn<Team, Integer> lbLossesCol;
-    @FXML private TableColumn<Team, Double> lbWinRateCol;
-    @FXML private Button refreshLeaderboardBtn;
-
-    // Matches Tab
-    @FXML private TableView<Match> matchesTable;
-    @FXML private TableColumn<Match, Integer> matchIdCol;
-    @FXML private TableColumn<Match, String> matchTeam1Col;
-    @FXML private TableColumn<Match, String> matchTeam2Col;
-    @FXML private TableColumn<Match, String> matchScoreCol;
-    @FXML private TableColumn<Match, String> matchStatusCol;
-    @FXML private TableColumn<Match, String> matchRoundCol;
-    @FXML private Button recordMatchBtn;
-    @FXML private Button viewMatchDetailsBtn;
-
-    // Export/Import
     @FXML private Button exportDataBtn;
     @FXML private Button importDataBtn;
     @FXML private Button backToMenuBtn;
+
+    // Tab controllers
+    private TeamsTabController teamsTabController;
+    private PlayersTabController playersTabController;
+    private TournamentsTabController tournamentsTabController;
+    private MatchesTabController matchesTabController;
+    private LeaderboardTabController leaderboardTabController;
 
     private MainApp mainApp;
     private TeamDAO teamDAO;
@@ -116,9 +49,6 @@ public class OrganizerDashboardController {
     private JsonExportImportService jsonService;
 
     private ObservableList<Team> teamsData;
-    private ObservableList<Player> playersData;
-    private ObservableList<Tournament> tournamentsData;
-    private ObservableList<Match> matchesData;
 
     public void setMainApp(MainApp mainApp) {
         this.mainApp = mainApp;
@@ -135,120 +65,57 @@ public class OrganizerDashboardController {
 
         // Initialize observable lists
         teamsData = FXCollections.observableArrayList();
-        playersData = FXCollections.observableArrayList();
-        tournamentsData = FXCollections.observableArrayList();
-        matchesData = FXCollections.observableArrayList();
 
-        // Setup tables
-        setupTeamsTable();
-        setupPlayersTable();
-        setupLeaderboardTable();
-        setupTournamentsList();
-        setupMatchesTable();
+        // Initialize tab controllers
+        initializeTabControllers();
 
         // Load initial data
         loadAllData();
     }
 
-    private void setupTeamsTable() {
-        teamNameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-        teamTagCol.setCellValueFactory(new PropertyValueFactory<>("tag"));
-        teamRegionCol.setCellValueFactory(new PropertyValueFactory<>("region"));
-        teamWinsCol.setCellValueFactory(new PropertyValueFactory<>("wins"));
-        teamLossesCol.setCellValueFactory(new PropertyValueFactory<>("losses"));
-        teamWinRateCol.setCellValueFactory(cellData ->
-                javafx.beans.binding.Bindings.createDoubleBinding(
-                        () -> cellData.getValue().getWinRate()
-                ).asObject());
+    private void initializeTabControllers() {
+        try {
+            // Teams Tab
+            Tab teamsTab = mainTabPane.getTabs().get(0);
+            FXMLLoader teamsLoader = new FXMLLoader(getClass().getResource("/fxml/tabs/TeamsTab.fxml"));
+            teamsTab.setContent(teamsLoader.load());
+            teamsTabController = teamsLoader.getController();
+            teamsTabController.initialize(teamDAO, playerDAO);
 
-        teamsTable.setItems(teamsData);
+            // Players Tab
+            Tab playersTab = mainTabPane.getTabs().get(1);
+            FXMLLoader playersLoader = new FXMLLoader(getClass().getResource("/fxml/tabs/PlayersTab.fxml"));
+            playersTab.setContent(playersLoader.load());
+            playersTabController = playersLoader.getController();
+            playersTabController.initialize(playerDAO, teamDAO, teamsData);
 
-        // Double-click to view details
-        teamsTable.setOnMouseClicked(event -> {
-            if (event.getClickCount() == 2 && teamsTable.getSelectionModel().getSelectedItem() != null) {
-                handleViewTeamPlayers();
-            }
-        });
-    }
+            // Tournaments Tab
+            Tab tournamentsTab = mainTabPane.getTabs().get(2);
+            FXMLLoader tournamentsLoader = new FXMLLoader(getClass().getResource("/fxml/tabs/TournamentsTab.fxml"));
+            tournamentsTab.setContent(tournamentsLoader.load());
+            tournamentsTabController = tournamentsLoader.getController();
+            tournamentsTabController.initialize(tournamentDAO, matchDAO, teamDAO, teamsData, 
+                    () -> mainTabPane.getSelectionModel().select(4)); // Switch to Matches tab
 
-    private void setupPlayersTable() {
-        playerUsernameCol.setCellValueFactory(new PropertyValueFactory<>("username"));
-        playerRealNameCol.setCellValueFactory(new PropertyValueFactory<>("realName"));
-        playerRoleCol.setCellValueFactory(new PropertyValueFactory<>("role"));
-        playerAvailabilityCol.setCellValueFactory(cellData ->
-                javafx.beans.binding.Bindings.createStringBinding(
-                        () -> cellData.getValue().isAvailable() ? "Available" : "Unavailable"
-                ));
-        playerKillsCol.setCellValueFactory(new PropertyValueFactory<>("totalKills"));
-        playerDeathsCol.setCellValueFactory(new PropertyValueFactory<>("totalDeaths"));
-        playerKDCol.setCellValueFactory(cellData ->
-                javafx.beans.binding.Bindings.createDoubleBinding(
-                        () -> cellData.getValue().getKdRatio()
-                ).asObject());
+            // Leaderboard Tab
+            Tab leaderboardTab = mainTabPane.getTabs().get(3);
+            FXMLLoader leaderboardLoader = new FXMLLoader(getClass().getResource("/fxml/tabs/LeaderboardTab.fxml"));
+            leaderboardTab.setContent(leaderboardLoader.load());
+            leaderboardTabController = leaderboardLoader.getController();
+            leaderboardTabController.initialize(teamDAO);
 
-        playersTable.setItems(playersData);
-    }
+            // Matches Tab
+            Tab matchesTab = mainTabPane.getTabs().get(4);
+            FXMLLoader matchesLoader = new FXMLLoader(getClass().getResource("/fxml/tabs/MatchesTab.fxml"));
+            matchesTab.setContent(matchesLoader.load());
+            matchesTabController = matchesLoader.getController();
+            matchesTabController.initialize(matchDAO, teamDAO, playerDAO, teamsData);
 
-    private void setupLeaderboardTable() {
-        lbRankCol.setCellValueFactory(cellData ->
-                javafx.beans.binding.Bindings.createIntegerBinding(
-                        () -> leaderboardTable.getItems().indexOf(cellData.getValue()) + 1
-                ).asObject());
-        lbTeamCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-        lbWinsCol.setCellValueFactory(new PropertyValueFactory<>("wins"));
-        lbLossesCol.setCellValueFactory(new PropertyValueFactory<>("losses"));
-        lbWinRateCol.setCellValueFactory(cellData ->
-                javafx.beans.binding.Bindings.createDoubleBinding(
-                        () -> cellData.getValue().getWinRate()
-                ).asObject());
-    }
-
-    private void setupTournamentsList() {
-        tournamentsList.setItems(tournamentsData);
-        tournamentsList.setCellFactory(param -> new ListCell<Tournament>() {
-            @Override
-            protected void updateItem(Tournament item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getName() + " - " + item.getStatus());
-                }
-            }
-        });
-
-        tournamentsList.getSelectionModel().selectedItemProperty().addListener(
-                (obs, oldVal, newVal) -> updateTournamentDetails(newVal));
-    }
-
-    private void setupMatchesTable() {
-        matchIdCol.setCellValueFactory(new PropertyValueFactory<>("id"));
-
-        matchTeam1Col.setCellValueFactory(cellData -> {
-            Match match = cellData.getValue();
-            Team team1 = teamDAO.getTeamById(match.getTeam1Id());
-            return javafx.beans.binding.Bindings.createStringBinding(
-                    () -> team1 != null ? team1.getName() : "Unknown");
-        });
-
-        matchTeam2Col.setCellValueFactory(cellData -> {
-            Match match = cellData.getValue();
-            Team team2 = teamDAO.getTeamById(match.getTeam2Id());
-            return javafx.beans.binding.Bindings.createStringBinding(
-                    () -> team2 != null ? team2.getName() : "Unknown");
-        });
-
-        matchScoreCol.setCellValueFactory(cellData ->
-                javafx.beans.binding.Bindings.createStringBinding(
-                        () -> cellData.getValue().getScoreDisplay()));
-
-        matchStatusCol.setCellValueFactory(cellData ->
-                javafx.beans.binding.Bindings.createStringBinding(
-                        () -> cellData.getValue().getStatus().toString()));
-
-        matchRoundCol.setCellValueFactory(new PropertyValueFactory<>("round"));
-
-        matchesTable.setItems(matchesData);
+        } catch (Exception e) {
+            System.err.println("Error initializing tab controllers: " + e.getMessage());
+            e.printStackTrace();
+            MainApp.showError("Initialization Error", "Failed to load dashboard tabs: " + e.getMessage());
+        }
     }
 
     private void loadAllData() {
@@ -262,595 +129,15 @@ public class OrganizerDashboardController {
 
         loadTeamsTask.setOnSucceeded(e -> {
             teamsData.setAll(loadTeamsTask.getValue());
-            updateLeaderboard();
+            if (leaderboardTabController != null) {
+                leaderboardTabController.updateLeaderboard();
+            }
         });
 
         loadTeamsTask.setOnFailed(e ->
                 MainApp.showError("Error", "Failed to load teams"));
 
         new Thread(loadTeamsTask).start();
-
-        // Load players in background
-        Task<List<Player>> loadPlayersTask = new Task<>() {
-            @Override
-            protected List<Player> call() {
-                return playerDAO.getAllPlayers();
-            }
-        };
-
-        loadPlayersTask.setOnSucceeded(e ->
-                playersData.setAll(loadPlayersTask.getValue()));
-
-        loadPlayersTask.setOnFailed(e ->
-                MainApp.showError("Error", "Failed to load players"));
-
-        new Thread(loadPlayersTask).start();
-
-        // Load tournaments in background
-        Task<List<Tournament>> loadTournamentsTask = new Task<>() {
-            @Override
-            protected List<Tournament> call() {
-                return tournamentDAO.getAllTournaments();
-            }
-        };
-
-        loadTournamentsTask.setOnSucceeded(e ->
-                tournamentsData.setAll(loadTournamentsTask.getValue()));
-
-        loadTournamentsTask.setOnFailed(e ->
-                MainApp.showError("Error", "Failed to load tournaments"));
-
-        new Thread(loadTournamentsTask).start();
-    }
-
-    @FXML
-    private void handleAddTeam() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Add Team");
-        dialog.setHeaderText("Create New Team");
-        dialog.setContentText("Team Name:");
-
-        Optional<String> result = dialog.showAndWait();
-        result.ifPresent(name -> {
-            if (!name.trim().isEmpty()) {
-                showTeamDialog(null, name);
-            }
-        });
-    }
-
-    private void showTeamDialog(Team team, String initialName) {
-        Dialog<Team> dialog = new Dialog<>();
-        dialog.setTitle(team == null ? "Create Team" : "Edit Team");
-
-        ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-
-        TextField nameField = new TextField(team != null ? team.getName() : initialName);
-        TextField tagField = new TextField(team != null ? team.getTag() : "");
-        TextField regionField = new TextField(team != null ? team.getRegion() : "");
-
-        grid.add(new Label("Team Name:"), 0, 0);
-        grid.add(nameField, 1, 0);
-        grid.add(new Label("Team Tag:"), 0, 1);
-        grid.add(tagField, 1, 1);
-        grid.add(new Label("Region:"), 0, 2);
-        grid.add(regionField, 1, 2);
-
-        dialog.getDialogPane().setContent(grid);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == saveButtonType) {
-                Team t = team != null ? team : new Team();
-                t.setName(nameField.getText());
-                t.setTag(tagField.getText());
-                t.setRegion(regionField.getText());
-                return t;
-            }
-            return null;
-        });
-
-        Optional<Team> result = dialog.showAndWait();
-        result.ifPresent(this::saveTeam);
-    }
-
-    private void saveTeam(Team team) {
-        Task<Integer> saveTask = new Task<>() {
-            @Override
-            protected Integer call() {
-                if (team.getId() == 0) {
-                    return teamDAO.createTeam(team);
-                } else {
-                    teamDAO.updateTeam(team);
-                    return team.getId();
-                }
-            }
-        };
-
-        saveTask.setOnSucceeded(e -> {
-            MainApp.showInfo("Success", "Team saved successfully");
-            loadAllData();
-        });
-
-        saveTask.setOnFailed(e ->
-                MainApp.showError("Error", "Failed to save team"));
-
-        new Thread(saveTask).start();
-    }
-
-    @FXML
-    private void handleEditTeam() {
-        Team selected = teamsTable.getSelectionModel().getSelectedItem();
-        if (selected != null) {
-            showTeamDialog(selected, selected.getName());
-        } else {
-            MainApp.showError("No Selection", "Please select a team to edit");
-        }
-    }
-
-    @FXML
-    private void handleDeleteTeam() {
-        Team selected = teamsTable.getSelectionModel().getSelectedItem();
-        if (selected != null) {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle("Confirm Delete");
-            alert.setContentText("Delete team: " + selected.getName() + "?");
-
-            alert.showAndWait().ifPresent(response -> {
-                if (response == ButtonType.OK) {
-                    Task<Boolean> deleteTask = new Task<>() {
-                        @Override
-                        protected Boolean call() {
-                            return teamDAO.deleteTeam(selected.getId());
-                        }
-                    };
-
-                    deleteTask.setOnSucceeded(e -> {
-                        if (deleteTask.getValue()) {
-                            MainApp.showInfo("Success", "Team deleted successfully");
-                            loadAllData();
-                        } else {
-                            MainApp.showError("Error", "Failed to delete team");
-                        }
-                    });
-
-                    new Thread(deleteTask).start();
-                }
-            });
-        } else {
-            MainApp.showError("No Selection", "Please select a team to delete");
-        }
-    }
-
-    @FXML
-    private void handleViewTeamPlayers() {
-        Team selected = teamsTable.getSelectionModel().getSelectedItem();
-        if (selected != null) {
-            showTeamPlayersDialog(selected);
-        } else {
-            MainApp.showError("No Selection", "Please select a team to view players");
-        }
-    }
-
-    private void showTeamPlayersDialog(Team team) {
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Team Players - " + team.getName());
-        dialog.setHeaderText("Members of " + team.getName());
-
-        ListView<Player> playersList = new ListView<>();
-        playersList.setPrefWidth(400);
-        playersList.setPrefHeight(300);
-
-        Task<List<Player>> loadTask = new Task<>() {
-            @Override
-            protected List<Player> call() {
-                return playerDAO.getPlayersByTeam(team.getId());
-            }
-        };
-
-        loadTask.setOnSucceeded(e -> {
-            List<Player> players = loadTask.getValue();
-            playersList.setItems(FXCollections.observableArrayList(players));
-            playersList.setCellFactory(param -> new ListCell<Player>() {
-                @Override
-                protected void updateItem(Player item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        setText(null);
-                    } else {
-                        String status = item.isAvailable() ? "✓" : "✗";
-                        setText(status + " " + item.getUsername() + " - " + item.getRole() +
-                                " (K/D: " + String.format("%.2f", item.getKdRatio()) + ")");
-                    }
-                }
-            });
-        });
-
-        new Thread(loadTask).start();
-
-        dialog.getDialogPane().setContent(playersList);
-        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
-        dialog.showAndWait();
-    }
-
-    @FXML
-    private void handleEditPlayer() {
-        Player selected = playersTable.getSelectionModel().getSelectedItem();
-        if (selected != null) {
-            showPlayerEditDialog(selected);
-        } else {
-            MainApp.showError("No Selection", "Please select a player to edit");
-        }
-    }
-
-    private void showPlayerEditDialog(Player player) {
-        Dialog<Player> dialog = new Dialog<>();
-        dialog.setTitle("Edit Player");
-        dialog.setHeaderText("Edit Player: " + player.getUsername());
-
-        ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-
-        TextField usernameField = new TextField(player.getUsername());
-        TextField realNameField = new TextField(player.getRealName());
-        TextField emailField = new TextField(player.getEmail());
-        TextField roleField = new TextField(player.getRole());
-
-        // Team assignment
-        ComboBox<Team> teamCombo = new ComboBox<>();
-        teamCombo.setItems(teamsData);
-        teamCombo.setCellFactory(param -> new ListCell<>() {
-            @Override
-            protected void updateItem(Team item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getName() + " [" + item.getTag() + "]");
-            }
-        });
-        teamCombo.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(Team item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? "No Team" : item.getName() + " [" + item.getTag() + "]");
-            }
-        });
-
-        // Set current team if exists
-        if (player.getTeamId() != null) {
-            teamsData.stream()
-                    .filter(t -> t.getId() == player.getTeamId())
-                    .findFirst()
-                    .ifPresent(teamCombo::setValue);
-        }
-
-        CheckBox availableCheckBox = new CheckBox("Available");
-        availableCheckBox.setSelected(player.isAvailable());
-
-        // Stats fields
-        TextField killsField = new TextField(String.valueOf(player.getTotalKills()));
-        TextField deathsField = new TextField(String.valueOf(player.getTotalDeaths()));
-        TextField assistsField = new TextField(String.valueOf(player.getTotalAssists()));
-        TextField matchesPlayedField = new TextField(String.valueOf(player.getMatchesPlayed()));
-        TextField matchesWonField = new TextField(String.valueOf(player.getMatchesWon()));
-
-        grid.add(new Label("Username:"), 0, 0);
-        grid.add(usernameField, 1, 0);
-        grid.add(new Label("Real Name:"), 0, 1);
-        grid.add(realNameField, 1, 1);
-        grid.add(new Label("Email:"), 0, 2);
-        grid.add(emailField, 1, 2);
-        grid.add(new Label("Role:"), 0, 3);
-        grid.add(roleField, 1, 3);
-        grid.add(new Label("Team:"), 0, 4);
-        grid.add(teamCombo, 1, 4);
-        grid.add(new Label("Status:"), 0, 5);
-        grid.add(availableCheckBox, 1, 5);
-        grid.add(new Separator(), 0, 6);
-        grid.add(new Label("Total Kills:"), 0, 7);
-        grid.add(killsField, 1, 7);
-        grid.add(new Label("Total Deaths:"), 0, 8);
-        grid.add(deathsField, 1, 8);
-        grid.add(new Label("Total Assists:"), 0, 9);
-        grid.add(assistsField, 1, 9);
-        grid.add(new Label("Matches Played:"), 0, 10);
-        grid.add(matchesPlayedField, 1, 10);
-        grid.add(new Label("Matches Won:"), 0, 11);
-        grid.add(matchesWonField, 1, 11);
-
-        dialog.getDialogPane().setContent(grid);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == saveButtonType) {
-                player.setUsername(usernameField.getText());
-                player.setRealName(realNameField.getText());
-                player.setEmail(emailField.getText());
-                player.setRole(roleField.getText());
-                player.setAvailable(availableCheckBox.isSelected());
-
-                Team selectedTeam = teamCombo.getValue();
-                player.setTeamId(selectedTeam != null ? selectedTeam.getId() : null);
-
-                // Parse and set stats
-                try {
-                    player.setTotalKills(Integer.parseInt(killsField.getText()));
-                    player.setTotalDeaths(Integer.parseInt(deathsField.getText()));
-                    player.setTotalAssists(Integer.parseInt(assistsField.getText()));
-                    player.setMatchesPlayed(Integer.parseInt(matchesPlayedField.getText()));
-                    player.setMatchesWon(Integer.parseInt(matchesWonField.getText()));
-                } catch (NumberFormatException e) {
-                    MainApp.showError("Invalid Input", "Please enter valid numbers for stats");
-                    return null;
-                }
-
-                return player;
-            }
-            return null;
-        });
-
-        Optional<Player> result = dialog.showAndWait();
-        result.ifPresent(this::updatePlayer);
-    }
-
-    private void updatePlayer(Player player) {
-        Task<Boolean> updateTask = new Task<>() {
-            @Override
-            protected Boolean call() {
-                return playerDAO.updatePlayer(player);
-            }
-        };
-
-        updateTask.setOnSucceeded(e -> {
-            if (updateTask.getValue()) {
-                MainApp.showInfo("Success", "Player updated successfully");
-                loadAllData();
-            } else {
-                MainApp.showError("Error", "Failed to update player");
-            }
-        });
-
-        updateTask.setOnFailed(e ->
-                MainApp.showError("Error", "Failed to update player"));
-
-        new Thread(updateTask).start();
-    }
-
-    @FXML
-    private void handleAssignTeam() {
-        Player selected = playersTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            MainApp.showError("No Selection", "Please select a player to assign to a team");
-            return;
-        }
-
-        Dialog<Team> dialog = new Dialog<>();
-        dialog.setTitle("Assign to Team");
-        dialog.setHeaderText("Assign " + selected.getUsername() + " to a team");
-
-        ButtonType assignButtonType = new ButtonType("Assign", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(assignButtonType, ButtonType.CANCEL);
-
-        VBox content = new VBox(10);
-        Label label = new Label("Select Team:");
-        ComboBox<Team> teamCombo = new ComboBox<>();
-        teamCombo.setItems(teamsData);
-        teamCombo.setPrefWidth(300);
-
-        teamCombo.setCellFactory(param -> new ListCell<>() {
-            @Override
-            protected void updateItem(Team item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getName() + " [" + item.getTag() + "]");
-            }
-        });
-
-        teamCombo.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(Team item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? "Select a team" : item.getName() + " [" + item.getTag() + "]");
-            }
-        });
-
-        // Set current team if exists
-        if (selected.getTeamId() != null) {
-            teamsData.stream()
-                    .filter(t -> t.getId() == selected.getTeamId())
-                    .findFirst()
-                    .ifPresent(teamCombo::setValue);
-        }
-
-        content.getChildren().addAll(label, teamCombo);
-        dialog.getDialogPane().setContent(content);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == assignButtonType) {
-                return teamCombo.getValue();
-            }
-            return null;
-        });
-
-        Optional<Team> result = dialog.showAndWait();
-        result.ifPresent(team -> {
-            selected.setTeamId(team != null ? team.getId() : null);
-            updatePlayer(selected);
-        });
-    }
-
-    @FXML
-    private void handleDeletePlayer() {
-        Player selected = playersTable.getSelectionModel().getSelectedItem();
-        if (selected != null) {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle("Confirm Delete");
-            alert.setContentText("Delete player: " + selected.getUsername() + "?");
-
-            alert.showAndWait().ifPresent(response -> {
-                if (response == ButtonType.OK) {
-                    Task<Boolean> deleteTask = new Task<>() {
-                        @Override
-                        protected Boolean call() {
-                            return playerDAO.deletePlayer(selected.getId());
-                        }
-                    };
-
-                    deleteTask.setOnSucceeded(e -> {
-                        if (deleteTask.getValue()) {
-                            MainApp.showInfo("Success", "Player deleted successfully");
-                            loadAllData();
-                        } else {
-                            MainApp.showError("Error", "Failed to delete player");
-                        }
-                    });
-
-                    new Thread(deleteTask).start();
-                }
-            });
-        } else {
-            MainApp.showError("No Selection", "Please select a player to delete");
-        }
-    }
-
-    @FXML
-    private void handleRefreshLeaderboard() {
-        updateLeaderboard();
-    }
-
-    private void updateLeaderboard() {
-        Task<List<Team>> task = new Task<>() {
-            @Override
-            protected List<Team> call() {
-                return teamDAO.getLeaderboard();
-            }
-        };
-
-        task.setOnSucceeded(e ->
-                leaderboardTable.setItems(FXCollections.observableArrayList(task.getValue())));
-
-        task.setOnFailed(e ->
-                MainApp.showError("Error", "Failed to update leaderboard"));
-
-        new Thread(task).start();
-    }
-
-    private void updateTournamentDetails(Tournament tournament) {
-        if (tournament != null) {
-            tournamentNameLabel.setText(tournament.getName());
-            tournamentGameLabel.setText(tournament.getGame());
-            tournamentStatusLabel.setText(tournament.getStatus().toString());
-            tournamentPrizeLabel.setText(String.format("$%.2f", tournament.getPrizePool()));
-        } else {
-            tournamentNameLabel.setText("-");
-            tournamentGameLabel.setText("-");
-            tournamentStatusLabel.setText("-");
-            tournamentPrizeLabel.setText("-");
-        }
-    }
-
-    @FXML
-    private void handleCreateTournament() {
-        Dialog<Tournament> dialog = new Dialog<>();
-        dialog.setTitle("Create Tournament");
-        dialog.setHeaderText("Create New Tournament");
-
-        ButtonType createButtonType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(createButtonType, ButtonType.CANCEL);
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-
-        TextField nameField = new TextField();
-        nameField.setPromptText("Tournament Name");
-        TextField gameField = new TextField();
-        gameField.setPromptText("Game (e.g., VALORANT)");
-        ComboBox<String> formatCombo = new ComboBox<>();
-        formatCombo.getItems().addAll("Single Elimination", "Double Elimination", "Round Robin");
-        formatCombo.setValue("Single Elimination");
-        DatePicker startDatePicker = new DatePicker();
-        startDatePicker.setValue(LocalDate.now().plusDays(7));
-        DatePicker endDatePicker = new DatePicker();
-        endDatePicker.setValue(LocalDate.now().plusDays(14));
-        TextField prizePoolField = new TextField();
-        prizePoolField.setPromptText("Prize Pool (e.g., 10000)");
-        TextField maxTeamsField = new TextField();
-        maxTeamsField.setPromptText("Max Teams");
-        maxTeamsField.setText("16");
-
-        grid.add(new Label("Tournament Name:"), 0, 0);
-        grid.add(nameField, 1, 0);
-        grid.add(new Label("Game:"), 0, 1);
-        grid.add(gameField, 1, 1);
-        grid.add(new Label("Format:"), 0, 2);
-        grid.add(formatCombo, 1, 2);
-        grid.add(new Label("Start Date:"), 0, 3);
-        grid.add(startDatePicker, 1, 3);
-        grid.add(new Label("End Date:"), 0, 4);
-        grid.add(endDatePicker, 1, 4);
-        grid.add(new Label("Prize Pool ($):"), 0, 5);
-        grid.add(prizePoolField, 1, 5);
-        grid.add(new Label("Max Teams:"), 0, 6);
-        grid.add(maxTeamsField, 1, 6);
-
-        dialog.getDialogPane().setContent(grid);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == createButtonType) {
-                try {
-                    Tournament tournament = new Tournament(
-                            nameField.getText(),
-                            gameField.getText(),
-                            formatCombo.getValue(),
-                            startDatePicker.getValue(),
-                            endDatePicker.getValue(),
-                            Double.parseDouble(prizePoolField.getText()),
-                            Integer.parseInt(maxTeamsField.getText())
-                    );
-                    tournament.setStatus(Tournament.TournamentStatus.REGISTRATION_OPEN);
-                    return tournament;
-                } catch (NumberFormatException e) {
-                    MainApp.showError("Invalid Input", "Please enter valid numbers for prize pool and max teams");
-                    return null;
-                }
-            }
-            return null;
-        });
-
-        Optional<Tournament> result = dialog.showAndWait();
-        result.ifPresent(this::saveTournament);
-    }
-
-    private void saveTournament(Tournament tournament) {
-        if (tournament == null) return;
-
-        Task<Integer> saveTask = new Task<>() {
-            @Override
-            protected Integer call() {
-                TournamentDAO tournamentDAO = new TournamentDAO();
-                int id = tournamentDAO.createTournament(tournament);
-                tournamentDAO.shutdown();
-                return id;
-            }
-        };
-
-        saveTask.setOnSucceeded(e -> {
-            if (saveTask.getValue() > 0) {
-                MainApp.showInfo("Success", "Tournament created successfully!");
-                loadAllData();
-            } else {
-                MainApp.showError("Error", "Failed to create tournament");
-            }
-        });
-
-        saveTask.setOnFailed(e ->
-                MainApp.showError("Error", "Failed to create tournament: " + e.getSource().getException().getMessage()));
-
-        new Thread(saveTask).start();
     }
 
     @FXML
@@ -868,414 +155,6 @@ public class OrganizerDashboardController {
     }
 
     @FXML
-    private void handleViewMatchDetails() {
-        Match selected = matchesTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            MainApp.showError("No Selection", "Please select a match to view details");
-            return;
-        }
-
-        // Refresh match from DB to ensure latest player stats
-        Match match = matchDAO.getMatchById(selected.getId());
-        if (match == null) {
-            MainApp.showError("Error", "Failed to load match details");
-            return;
-        }
-
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Match Details - " + match.getId());
-        dialog.setHeaderText("Match Details and Player Stats");
-
-        ButtonType finalizeButtonType = new ButtonType("Finalize Match", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(finalizeButtonType, ButtonType.CLOSE);
-
-        VBox content = new VBox(12);
-        content.setPrefWidth(700);
-
-        Team team1 = teamDAO.getTeamById(match.getTeam1Id());
-        Team team2 = teamDAO.getTeamById(match.getTeam2Id());
-
-        Label teamsLabel = new Label((team1 != null ? team1.getName() : "Team 1") + " vs " + (team2 != null ? team2.getName() : "Team 2"));
-        teamsLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
-
-        HBox scoreBox = new HBox(10);
-        TextField team1ScoreField = new TextField(String.valueOf(match.getTeam1Score()));
-        team1ScoreField.setPrefWidth(80);
-        TextField team2ScoreField = new TextField(String.valueOf(match.getTeam2Score()));
-        team2ScoreField.setPrefWidth(80);
-
-        scoreBox.getChildren().addAll(new Label(team1 != null ? team1.getName() : "Team 1"), team1ScoreField,
-                new Label("-"), team2ScoreField, new Label(team2 != null ? team2.getName() : "Team 2"));
-
-        content.getChildren().addAll(teamsLabel, scoreBox, new Separator());
-
-        // Load players for both teams and allow entering stats
-        List<Player> playersTeam1 = playerDAO.getPlayersByTeam(match.getTeam1Id());
-        List<Player> playersTeam2 = playerDAO.getPlayersByTeam(match.getTeam2Id());
-
-        VBox playersContainer = new VBox(10);
-
-        // Helper to create a grid of inputs per player
-        class PlayerInputs {
-            int playerId;
-            TextField kills = new TextField("0");
-            TextField deaths = new TextField("0");
-            TextField assists = new TextField("0");
-        }
-
-        List<PlayerInputs> inputs = new java.util.ArrayList<>();
-
-        if (!playersTeam1.isEmpty()) {
-            playersContainer.getChildren().add(new Label("" + (team1 != null ? team1.getName() : "Team 1") + " Players"));
-            for (Player p : playersTeam1) {
-                PlayerInputs pi = new PlayerInputs();
-                pi.playerId = p.getId();
-                HBox row = new HBox(8);
-                row.getChildren().addAll(new Label(p.getUsername()), new Label("Kills:"), pi.kills,
-                        new Label("Deaths:"), pi.deaths, new Label("Assists:"), pi.assists);
-                playersContainer.getChildren().add(row);
-                inputs.add(pi);
-            }
-        }
-
-        if (!playersTeam2.isEmpty()) {
-            playersContainer.getChildren().add(new Label("" + (team2 != null ? team2.getName() : "Team 2") + " Players"));
-            for (Player p : playersTeam2) {
-                PlayerInputs pi = new PlayerInputs();
-                pi.playerId = p.getId();
-                HBox row = new HBox(8);
-                row.getChildren().addAll(new Label(p.getUsername()), new Label("Kills:"), pi.kills,
-                        new Label("Deaths:"), pi.deaths, new Label("Assists:"), pi.assists);
-                playersContainer.getChildren().add(row);
-                inputs.add(pi);
-            }
-        }
-
-        ScrollPane scroll = new ScrollPane(playersContainer);
-        scroll.setFitToWidth(true);
-        scroll.setPrefHeight(300);
-
-        content.getChildren().add(scroll);
-
-        dialog.getDialogPane().setContent(content);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == finalizeButtonType) {
-                // Parse scores
-                int s1 = 0, s2 = 0;
-                try {
-                    s1 = Integer.parseInt(team1ScoreField.getText().trim());
-                    s2 = Integer.parseInt(team2ScoreField.getText().trim());
-                } catch (NumberFormatException e) {
-                    MainApp.showError("Invalid Input", "Please enter valid integer scores");
-                    return null;
-                }
-
-                int finalS1 = s1, finalS2 = s2;
-
-                // Run DB updates in background
-                Task<Void> task = new Task<>() {
-                    @Override
-                    protected Void call() {
-                        // Update match scores and status
-                        match.setTeam1Score(finalS1);
-                        match.setTeam2Score(finalS2);
-                        if (match.getActualStartTime() == null) {
-                            match.setActualStartTime(java.time.LocalDateTime.now());
-                        }
-                        match.setActualEndTime(java.time.LocalDateTime.now());
-
-                        Integer winnerId = null;
-                        if (finalS1 > finalS2) {
-                            winnerId = match.getTeam1Id();
-                        } else if (finalS2 > finalS1) {
-                            winnerId = match.getTeam2Id();
-                        }
-                        match.setWinnerId(winnerId);
-                        match.setStatus(Match.MatchStatus.COMPLETED);
-
-                        matchDAO.updateMatch(match);
-
-                        // Update team records
-                        if (winnerId == null) {
-                            teamDAO.updateTeamRecord(match.getTeam1Id(), false, true);
-                            teamDAO.updateTeamRecord(match.getTeam2Id(), false, true);
-                        } else if (winnerId.equals(match.getTeam1Id())) {
-                            teamDAO.updateTeamRecord(match.getTeam1Id(), true, false);
-                            teamDAO.updateTeamRecord(match.getTeam2Id(), false, false);
-                        } else {
-                            teamDAO.updateTeamRecord(match.getTeam2Id(), true, false);
-                            teamDAO.updateTeamRecord(match.getTeam1Id(), false, false);
-                        }
-
-                        // For each player input, insert player_match_stats and update aggregated player stats
-                        for (PlayerInputs pi : inputs) {
-                            int kills = 0, deaths = 0, assists = 0;
-                            try {
-                                kills = Integer.parseInt(pi.kills.getText().trim());
-                                deaths = Integer.parseInt(pi.deaths.getText().trim());
-                                assists = Integer.parseInt(pi.assists.getText().trim());
-                            } catch (NumberFormatException ignored) {
-                            }
-
-                            com.esports.arena.model.PlayerMatchStats stats = new com.esports.arena.model.PlayerMatchStats();
-                            stats.setMatchId(match.getId());
-                            stats.setPlayerId(pi.playerId);
-                            stats.setKills(kills);
-                            stats.setDeaths(deaths);
-                            stats.setAssists(assists);
-
-                            // determine if player's team won
-                            boolean playerWon = false;
-                            // find player's team id
-                            com.esports.arena.model.Player p = playerDAO.getPlayerById(pi.playerId);
-                            if (p != null && p.getTeamId() != null && winnerId != null) {
-                                playerWon = p.getTeamId().equals(winnerId);
-                            }
-
-                            matchDAO.addPlayerStats(stats);
-                            playerDAO.updatePlayerStats(pi.playerId, kills, deaths, assists, playerWon);
-                        }
-
-                        return null;
-                    }
-                };
-
-                task.setOnSucceeded(e -> {
-                    MainApp.showInfo("Success", "Match finalized and stats recorded");
-                    loadAllData();
-                });
-
-                task.setOnFailed(e -> {
-                    MainApp.showError("Error", "Failed to finalize match: " + task.getException().getMessage());
-                });
-
-                new Thread(task).start();
-
-            }
-            return null;
-        });
-
-        dialog.showAndWait();
-    }
-
-    // Helper class
-    private static class MatchResult {
-        int team1Id;
-        int team2Id;
-        int team1Score;
-        int team2Score;
-
-        MatchResult(int team1Id, int team2Id, int team1Score, int team2Score) {
-            this.team1Id = team1Id;
-            this.team2Id = team2Id;
-            this.team1Score = team1Score;
-            this.team2Score = team2Score;
-        }
-    }
-
-    @FXML
-    private void handleRecordMatch() {
-        Dialog<MatchResult> dialog = new Dialog<>();
-        dialog.setTitle("Record Match Result");
-        dialog.setHeaderText("Record the result of a match");
-
-        ButtonType recordButtonType = new ButtonType("Record", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(recordButtonType, ButtonType.CANCEL);
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-
-        ComboBox<Team> team1Combo = new ComboBox<>();
-        ComboBox<Team> team2Combo = new ComboBox<>();
-        team1Combo.setItems(teamsData);
-        team2Combo.setItems(teamsData);
-        team1Combo.setPrefWidth(200);
-        team2Combo.setPrefWidth(200);
-
-        TextField team1ScoreField = new TextField("0");
-        TextField team2ScoreField = new TextField("0");
-
-        grid.add(new Label("Team 1:"), 0, 0);
-        grid.add(team1Combo, 1, 0);
-        grid.add(new Label("Team 1 Score:"), 0, 1);
-        grid.add(team1ScoreField, 1, 1);
-        grid.add(new Label("Team 2:"), 0, 2);
-        grid.add(team2Combo, 1, 2);
-        grid.add(new Label("Team 2 Score:"), 0, 3);
-        grid.add(team2ScoreField, 1, 3);
-
-        dialog.getDialogPane().setContent(grid);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == recordButtonType) {
-                try {
-                    Team t1 = team1Combo.getValue();
-                    Team t2 = team2Combo.getValue();
-                    if (t1 == null || t2 == null) {
-                        MainApp.showError("Invalid Input", "Please select both teams");
-                        return null;
-                    }
-                    return new MatchResult(
-                            t1.getId(),
-                            t2.getId(),
-                            Integer.parseInt(team1ScoreField.getText()),
-                            Integer.parseInt(team2ScoreField.getText())
-                    );
-                } catch (NumberFormatException e) {
-                    MainApp.showError("Invalid Input", "Please enter valid scores");
-                    return null;
-                }
-            }
-            return null;
-        });
-
-        Optional<MatchResult> result = dialog.showAndWait();
-        result.ifPresent(this::recordMatchResult);
-    }
-
-    @FXML
-    private void handleViewMatches() {
-        Tournament selected = tournamentsList.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            MainApp.showError("No Selection", "Please select a tournament");
-            return;
-        }
-
-        // Show dialog to add teams to tournament
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Manage Tournament: " + selected.getName());
-        dialog.setHeaderText("Add/Remove Teams");
-
-        ButtonType addButtonType = new ButtonType("Add Teams", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CLOSE);
-
-        VBox content = new VBox(10);
-        Label label = new Label("Select teams to add to this tournament:");
-        ListView<Team> teamsList = new ListView<>();
-        teamsList.setItems(teamsData);
-        teamsList.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.MULTIPLE);
-
-        content.getChildren().addAll(label, teamsList);
-        dialog.getDialogPane().setContent(content);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == addButtonType) {
-                // Add selected teams to tournament
-                for (Team team : teamsList.getSelectionModel().getSelectedItems()) {
-                    Task<Boolean> addTask = new Task<>() {
-                        @Override
-                        protected Boolean call() {
-                            // Implement tournament-team relationship if DAO exists
-                            return true;
-                        }
-                    };
-                    new Thread(addTask).start();
-                }
-            }
-            return null;
-        });
-
-        dialog.showAndWait();
-
-        // Load matches for tournament
-        Task<List<Match>> task = new Task<>() {
-            @Override
-            protected List<Match> call() {
-                return matchDAO.getMatchesByTournament(selected.getId());
-            }
-        };
-
-        task.setOnSucceeded(e -> {
-            matchesData.setAll(task.getValue());
-            mainTabPane.getSelectionModel().selectLast(); // Switch to Matches tab
-            MainApp.showInfo("Matches Loaded", "Showing matches for: " + selected.getName());
-        });
-
-        task.setOnFailed(e ->
-                MainApp.showError("Error", "Failed to load matches"));
-
-        new Thread(task).start();
-    }
-
-    @FXML
-    private void handleStartTournament() {
-        Tournament selected = tournamentsList.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            MainApp.showError("No Selection", "Please select a tournament to start");
-            return;
-        }
-
-        if (selected.getStatus() != Tournament.TournamentStatus.REGISTRATION_OPEN) {
-            MainApp.showError("Invalid Status", "Tournament must be in REGISTRATION_OPEN status");
-            return;
-        }
-
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Start Tournament");
-        alert.setHeaderText("Start " + selected.getName() + "?");
-        alert.setContentText("This will close registration and begin the tournament.");
-
-        alert.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                Task<Boolean> task = new Task<>() {
-                    @Override
-                    protected Boolean call() {
-                        selected.setStatus(Tournament.TournamentStatus.IN_PROGRESS);
-                        return tournamentDAO.updateTournament(selected);
-                    }
-                };
-
-                task.setOnSucceeded(e -> {
-                    if (task.getValue()) {
-                        MainApp.showInfo("Success", "Tournament started successfully!");
-                        loadAllData();
-                    } else {
-                        MainApp.showError("Error", "Failed to start tournament");
-                    }
-                });
-
-                new Thread(task).start();
-            }
-        });
-    }
-
-    private void recordMatchResult(MatchResult result) {
-        if (result == null) return;
-
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() {
-                // Update team records
-                if (result.team1Score > result.team2Score) {
-                    teamDAO.updateTeamRecord(result.team1Id, true, false);
-                    teamDAO.updateTeamRecord(result.team2Id, false, false);
-                } else if (result.team2Score > result.team1Score) {
-                    teamDAO.updateTeamRecord(result.team2Id, true, false);
-                    teamDAO.updateTeamRecord(result.team1Id, false, false);
-                } else {
-                    teamDAO.updateTeamRecord(result.team1Id, false, true);
-                    teamDAO.updateTeamRecord(result.team2Id, false, true);
-                }
-                return null;
-            }
-        };
-
-        task.setOnSucceeded(e -> {
-            MainApp.showInfo("Success", "Match result recorded!");
-            loadAllData();
-        });
-
-        task.setOnFailed(e ->
-                MainApp.showError("Error", "Failed to record match result"));
-
-        new Thread(task).start();
-    }
-
-
-
-    @FXML
     private void handleExportData() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Export Data");
@@ -1291,7 +170,7 @@ public class OrganizerDashboardController {
                     data.setPlayers(playerDAO.getAllPlayers());
                     data.setTeams(teamDAO.getAllTeams());
                     return jsonService.exportAllDataAsync(data, file.getAbsolutePath())
-                            .join(); // Wait for completion
+                            .join();
                 }
             };
 
@@ -1317,7 +196,6 @@ public class OrganizerDashboardController {
 
         if (file != null) {
             MainApp.showInfo("Import", "Import functionality - data will be loaded from: " + file.getName());
-            // Implement import logic here
             loadAllData();
         }
     }
