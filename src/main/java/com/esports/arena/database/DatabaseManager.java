@@ -72,6 +72,17 @@ public class DatabaseManager {
         try (Statement stmt = connection.createStatement()) {
 
             stmt.execute("""
+                CREATE TABLE IF NOT EXISTS organizers (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT NOT NULL UNIQUE,
+                    password TEXT NOT NULL,
+                    email TEXT UNIQUE,
+                    full_name TEXT,
+                    created_date TEXT
+                )
+            """);
+
+            stmt.execute("""
                 CREATE TABLE IF NOT EXISTS teams (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,

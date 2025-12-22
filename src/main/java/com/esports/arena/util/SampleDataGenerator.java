@@ -4,8 +4,10 @@ import java.time.LocalDate;
 import java.util.Random;
 
 import com.esports.arena.dao.LeaderVoteDAO;
+import com.esports.arena.dao.OrganizerDAO;
 import com.esports.arena.dao.PlayerDAO;
 import com.esports.arena.dao.TeamDAO;
+import com.esports.arena.model.Organizer;
 import com.esports.arena.model.Player;
 import com.esports.arena.model.Team;
 import com.esports.arena.model.Tournament;
@@ -17,6 +19,7 @@ public class SampleDataGenerator {
 
     private final TeamDAO teamDAO;
     private final PlayerDAO playerDAO;
+    private final OrganizerDAO organizerDAO;
     private final Random random;
 
     private static final String[] TEAM_NAMES = {
@@ -41,6 +44,7 @@ public class SampleDataGenerator {
     public SampleDataGenerator() {
         this.teamDAO = new TeamDAO();
         this.playerDAO = new PlayerDAO();
+        this.organizerDAO = new OrganizerDAO();
         this.random = new Random();
     }
 
@@ -51,7 +55,12 @@ public class SampleDataGenerator {
         System.out.println("🎮 Starting Sample Data Generation...\n");
 
         try {
-            // Generate teams first
+            // Generate organizers first
+            System.out.println("Creating organizers...");
+            generateOrganizers();
+            System.out.println("✓ Created sample organizers\n");
+
+            // Generate teams
             System.out.println("Creating teams...");
             int[] teamIds = generateTeams(5);
             System.out.println("✓ Created " + teamIds.length + " teams\n");
@@ -74,11 +83,31 @@ public class SampleDataGenerator {
 
             System.out.println("✅ Sample Data Generation Complete!");
             System.out.println("You can now use the application with pre-populated data.\n");
+            System.out.println("📝 Default Organizer Credentials:");
+            System.out.println("   Username: admin");
+            System.out.println("   Password: admin123\n");
 
         } catch (Exception e) {
             System.err.println("❌ Error generating sample data: " + e.getMessage());
         } finally {
             shutdown();
+        }
+    }
+
+    /**
+     * Generate sample organizers
+     */
+    private void generateOrganizers() {
+        // Check if organizers already exist to avoid duplicates
+        if (!organizerDAO.getAllOrganizers().isEmpty()) {
+            System.out.println("ℹ️  Organizers already exist, skipping creation");
+            return;
+        }
+
+        // Create default organizer
+        Organizer organizer = new Organizer("admin", "admin123", "admin@esports-arena.com", "Administrator");
+        if (organizerDAO.createOrganizer(organizer)) {
+            System.out.println("  ✓ Created organizer: " + organizer.getUsername());
         }
     }
 

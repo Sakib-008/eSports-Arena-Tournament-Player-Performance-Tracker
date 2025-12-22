@@ -21,9 +21,10 @@ public class MainApp extends Application {
         this.primaryStage = stage;
         primaryStage.setTitle("eSports Arena - Tournament & Player Performance Tracker");
 
-        // Set fullscreen
-//        primaryStage.setMaximized(true);
-//        primaryStage.setFullScreen(false); // Use maximized instead of fullscreen for better control
+        // Set consistent window size for all scenes
+        primaryStage.setWidth(1200);
+        primaryStage.setHeight(800);
+        primaryStage.centerOnScreen();
 
         showMainMenu();
 
