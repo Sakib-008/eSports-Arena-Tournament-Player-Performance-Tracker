@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.esports.arena.tabs.PlayerProfileTabController"
+      spacing="20" style="-fx-padding: 20;">
+
+    <VBox spacing="10" styleClass="card">
+        <Label text="Player Information" styleClass="card-title"/>
+        <Separator/>
+        <GridPane hgap="15" vgap="10">
+            <Label text="Username:" styleClass="grid-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+            <Label fx:id="playerNameLabel" text="-" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+            <Label text="Team:" styleClass="grid-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+            <Label fx:id="playerTeamLabel" text="No Team" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+            <Label text="Role:" styleClass="grid-label" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+            <Label fx:id="playerRoleLabel" text="-" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+
+            <Label text="K/D Ratio:" styleClass="grid-label" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+            <Label fx:id="playerKDLabel" text="0.00" styleClass="grid-value" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+
+            <Label text="Win Rate:" styleClass="grid-label" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+            <Label fx:id="playerWinRateLabel" text="0.0%" styleClass="grid-value" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+        </GridPane>
+    </VBox>
+
+    <VBox spacing="10" styleClass="card">
+        <Label text="Availability Status" styleClass="card-title"/>
+        <Separator/>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="I am available:"/>
+            <ToggleButton fx:id="availabilityToggle" text="Available"/>
+        </HBox>
+        <Label text="Reason (if unavailable):"/>
+        <TextArea fx:id="availabilityReasonField" prefRowCount="3" promptText="Enter reason..."/>
+        <Button fx:id="updateAvailabilityBtn" text="Update Status" onAction="#handleUpdateAvailability" styleClass="success-button" maxWidth="Infinity"/>
+    </VBox>
+
+</VBox>

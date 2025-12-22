@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<ScrollPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.esports.arena.tabs.PlayerStatsTabController"
+            fitToWidth="true" fitToHeight="true" style="-fx-background-color: transparent;">
+    <content>
+        <VBox spacing="20" style="-fx-padding: 20; -fx-min-width: 600;">
+
+            <VBox spacing="10" styleClass="card">
+                <Label text="Performance Statistics" styleClass="card-title"/>
+                <Separator/>
+                <GridPane hgap="30" vgap="15">
+                    <VBox spacing="5" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                        <Label text="Total Kills" styleClass="stat-label"/>
+                        <Label fx:id="totalKillsLabel" text="0" styleClass="stat-value, stat-kills"/>
+                    </VBox>
+
+                    <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                        <Label text="Total Deaths" styleClass="stat-label"/>
+                        <Label fx:id="totalDeathsLabel" text="0" styleClass="stat-value, stat-deaths"/>
+                    </VBox>
+
+                    <VBox spacing="5" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                        <Label text="Total Assists" styleClass="stat-label"/>
+                        <Label fx:id="totalAssistsLabel" text="0" styleClass="stat-value, stat-assists"/>
+                    </VBox>
+
+                    <VBox spacing="5" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                        <Label text="Matches Played" styleClass="stat-label"/>
+                        <Label fx:id="matchesPlayedLabel" text="0" styleClass="stat-value"/>
+                    </VBox>
+
+                    <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                        <Label text="Matches Won" styleClass="stat-label"/>
+                        <Label fx:id="matchesWonLabel" text="0" styleClass="stat-value"/>
+                    </VBox>
+                </GridPane>
+            </VBox>
+
+            <VBox spacing="10" styleClass="card">
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Tournament Statistics" styleClass="card-title" HBox.hgrow="ALWAYS"/>
+                    <ComboBox fx:id="tournamentCombo" prefWidth="200"/>
+                </HBox>
+                <Separator/>
+                <GridPane hgap="30" vgap="15">
+                    <VBox spacing="5" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                        <Label text="Kills" styleClass="stat-label"/>
+                        <Label fx:id="tournamentKillsLabel" text="0" styleClass="stat-value, stat-kills"/>
+                    </VBox>
+
+                    <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                        <Label text="Deaths" styleClass="stat-label"/>
+                        <Label fx:id="tournamentDeathsLabel" text="0" styleClass="stat-value, stat-deaths"/>
+                    </VBox>
+
+                    <VBox spacing="5" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                        <Label text="Assists" styleClass="stat-label"/>
+                        <Label fx:id="tournamentAssistsLabel" text="0" styleClass="stat-value, stat-assists"/>
+                    </VBox>
+
+                    <VBox spacing="5" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                        <Label text="Matches Played" styleClass="stat-label"/>
+                        <Label fx:id="tournamentMatchesPlayedLabel" text="0" styleClass="stat-value"/>
+                    </VBox>
+
+                    <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                        <Label text="Matches Won" styleClass="stat-label"/>
+                        <Label fx:id="tournamentMatchesWonLabel" text="0" styleClass="stat-value"/>
+                    </VBox>
+
+                    <VBox spacing="5" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                        <Label text="K/D Ratio" styleClass="stat-label"/>
+                        <Label fx:id="tournamentKDLabel" text="0.00" styleClass="stat-value"/>
+                    </VBox>
+
+                    <VBox spacing="5" GridPane.columnIndex="0" GridPane.rowIndex="2">
+                        <Label text="Win Rate" styleClass="stat-label"/>
+                        <Label fx:id="tournamentWinRateLabel" text="0.0%" styleClass="stat-value"/>
+                    </VBox>
+                </GridPane>
+            </VBox>
+
+            <VBox spacing="10" styleClass="card">
+                <Label text="Performance Chart" styleClass="card-title"/>
+                <Separator/>
+                <BarChart fx:id="performanceChart" legendVisible="false" prefHeight="260" maxHeight="320">
+                    <xAxis>
+                        <CategoryAxis fx:id="xAxis" label="Metrics"/>
+                    </xAxis>
+                    <yAxis>
+                        <NumberAxis fx:id="yAxis" label="Count"/>
+                    </yAxis>
+                </BarChart>
+            </VBox>
+
+        </VBox>
+    </content>
+</ScrollPane>

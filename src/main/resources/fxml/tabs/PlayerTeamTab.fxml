@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.esports.arena.tabs.PlayerTeamTabController" spacing="20" style="-fx-padding: 20;">
+
+    <VBox spacing="10" styleClass="card">
+        <Label text="Team Information" styleClass="card-title"/>
+        <Separator/>
+        <GridPane hgap="15" vgap="10">
+            <Label text="Team Name:" styleClass="grid-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+            <Label fx:id="myTeamNameLabel" text="Not in a team" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+            <Label text="Wins:" styleClass="grid-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+            <Label fx:id="teamWinsLabel" text="0" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+            <Label text="Losses:" styleClass="grid-label" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+            <Label fx:id="teamLossesLabel" text="0" styleClass="grid-value" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+
+            <Label text="Current Leader:" styleClass="grid-label" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+            <Label fx:id="teamLeaderLabel" text="N/A" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+        </GridPane>
+    </VBox>
+
+    <VBox spacing="10" styleClass="card" VBox.vgrow="ALWAYS">
+        <Label text="Team Members" styleClass="card-title"/>
+        <Separator/>
+        <ListView fx:id="teamMembersList" VBox.vgrow="ALWAYS"/>
+    </VBox>
+
+</VBox>

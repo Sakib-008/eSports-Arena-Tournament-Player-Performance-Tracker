@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.esports.arena.tabs.PlayerVotingTabController" spacing="20" style="-fx-padding: 20;">
+
+    <VBox spacing="10" styleClass="card">
+        <Label text="Team Leader Election" styleClass="card-title"/>
+        <Separator/>
+        <Label text="Vote for your preferred team leader. Each team member gets one vote." wrapText="true"/>
+        <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-background-color: #f0f0f0; -fx-background-radius: 5;">
+            <Label text="Your Status:" style="-fx-font-weight: bold; -fx-text-fill: black;"/>
+            <Label fx:id="votingStatusLabel" text="Select a player to see voting status" style="-fx-font-style: italic; -fx-font-weight: bold; -fx-text-fill: #0f3460;"/>
+        </HBox>
+    </VBox>
+
+    <VBox spacing="10" styleClass="card" VBox.vgrow="ALWAYS">
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Select Candidate" styleClass="card-title" HBox.hgrow="ALWAYS"/>
+            <Button fx:id="viewVotingResultsBtn" text="View Current Results" onAction="#handleViewVotingResults" styleClass="primary-button"/>
+        </HBox>
+        <Separator/>
+        <Label text="Click on a team member to select them as your vote:" style="-fx-font-size: 12px;"/>
+        <ListView fx:id="voteCandidatesList" VBox.vgrow="ALWAYS"/>
+        <Button fx:id="castVoteBtn" text="Cast Your Vote" onAction="#handleCastVote" styleClass="success-button" maxWidth="Infinity"/>
+    </VBox>
+
+</VBox>
