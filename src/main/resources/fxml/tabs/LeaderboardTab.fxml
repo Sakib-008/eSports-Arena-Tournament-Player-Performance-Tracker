@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.esports.arena.tabs.LeaderboardTabController"
+            stylesheets="@../../css/styles.css">
+
+    <center>
+        <TableView fx:id="leaderboardTable">
+            <columns>
+                <TableColumn fx:id="lbRankCol" text="Rank" prefWidth="60"/>
+                <TableColumn fx:id="lbTeamCol" text="Team" prefWidth="200"/>
+                <TableColumn fx:id="lbWinsCol" text="Wins" prefWidth="80"/>
+                <TableColumn fx:id="lbLossesCol" text="Losses" prefWidth="80"/>
+                <TableColumn fx:id="lbWinRateCol" text="Win Rate %" prefWidth="100"/>
+            </columns>
+        </TableView>
+    </center>
+    <bottom>
+        <HBox style="-fx-padding: 10;">
+            <Button fx:id="refreshLeaderboardBtn" text="Refresh"
+                    onAction="#handleRefreshLeaderboard" styleClass="primary-button"/>
+        </HBox>
+    </bottom>
+</BorderPane>
+

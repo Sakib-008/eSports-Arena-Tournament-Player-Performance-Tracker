@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.esports.arena.tabs.MatchesTabController"
+            stylesheets="@../../css/styles.css">
+
+    <center>
+        <TableView fx:id="matchesTable">
+            <columns>
+                <TableColumn fx:id="matchIdCol" text="ID" prefWidth="50"/>
+                <TableColumn fx:id="matchTeam1Col" text="Team 1" prefWidth="150"/>
+                <TableColumn fx:id="matchTeam2Col" text="Team 2" prefWidth="150"/>
+                <TableColumn fx:id="matchScoreCol" text="Score" prefWidth="80"/>
+                <TableColumn fx:id="matchStatusCol" text="Status" prefWidth="100"/>
+                <TableColumn fx:id="matchRoundCol" text="Round" prefWidth="120"/>
+            </columns>
+        </TableView>
+    </center>
+    <bottom>
+        <HBox spacing="10" style="-fx-padding: 10;">
+            <Button fx:id="recordMatchBtn" text="Record Match Result"
+                    onAction="#handleRecordMatch" styleClass="success-button"/>
+            <Button fx:id="viewMatchDetailsBtn" text="View Details"
+                    onAction="#handleViewMatchDetails" styleClass="primary-button"/>
+        </HBox>
+    </bottom>
+</BorderPane>
+

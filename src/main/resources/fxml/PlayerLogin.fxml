@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/25"
+            fx:controller="com.esports.arena.PlayerLoginController"
+            stylesheets="@../css/styles.css" style="-fx-background-color: #f5f5f5;">
+
+    <center>
+        <VBox alignment="CENTER" spacing="20" style="-fx-padding: 60;">
+
+            <Label text="Player Login" styleClass="dashboard-title" style="-fx-text-fill: #0f3460;"/>
+            <Label text="Access your player dashboard" style="-fx-text-fill: #666; -fx-font-size: 14px;"/>
+
+            <Separator />
+
+            <GridPane hgap="15" vgap="15" style="-fx-padding: 20; -fx-background-color: white; -fx-background-radius: 5;">
+                <Label text="Username:" GridPane.rowIndex="0" GridPane.columnIndex="0" style="-fx-font-weight: bold;" />
+                <TextField fx:id="usernameField" promptText="Enter your username" GridPane.rowIndex="0" GridPane.columnIndex="1" prefWidth="250"/>
+
+                <Label text="Password:" GridPane.rowIndex="1" GridPane.columnIndex="0" style="-fx-font-weight: bold;" />
+                <PasswordField fx:id="passwordField" promptText="Enter your password" GridPane.rowIndex="1" GridPane.columnIndex="1" />
+            </GridPane>
+
+            <HBox spacing="10" alignment="CENTER">
+                <Button fx:id="loginBtn" text="Login" onAction="#handleLogin" styleClass="primary-button" prefWidth="120"/>
+                <Button fx:id="cancelBtn" text="Cancel" onAction="#handleCancel" styleClass="danger-button" prefWidth="120"/>
+            </HBox>
+
+            <Label fx:id="errorLabel" text="" style="-fx-text-fill: #e94560; -fx-font-weight: bold;" />
+            <Label fx:id="helpLabel" text="New player? Click Signup on the main menu" style="-fx-text-fill: #0f3460; -fx-font-style: italic;" />
+
+        </VBox>
+    </center>
+
+</BorderPane>

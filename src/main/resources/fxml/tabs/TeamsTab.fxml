@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.esports.arena.tabs.TeamsTabController"
+            stylesheets="@../../css/styles.css">
+
+    <center>
+        <TableView fx:id="teamsTable">
+            <columns>
+                <TableColumn fx:id="teamNameCol" text="Team Name" prefWidth="150"/>
+                <TableColumn fx:id="teamTagCol" text="Tag" prefWidth="80"/>
+                <TableColumn fx:id="teamRegionCol" text="Region" prefWidth="100"/>
+                <TableColumn fx:id="teamWinsCol" text="Wins" prefWidth="60"/>
+                <TableColumn fx:id="teamLossesCol" text="Losses" prefWidth="60"/>
+                <TableColumn fx:id="teamWinRateCol" text="Win Rate %" prefWidth="100"/>
+            </columns>
+        </TableView>
+    </center>
+    <bottom>
+        <HBox spacing="10" style="-fx-padding: 10;">
+            <Button fx:id="addTeamBtn" text="Add Team"
+                    onAction="#handleAddTeam" styleClass="primary-button"/>
+            <Button fx:id="editTeamBtn" text="Edit Team"
+                    onAction="#handleEditTeam" styleClass="primary-button"/>
+            <Button fx:id="deleteTeamBtn" text="Delete Team"
+                    onAction="#handleDeleteTeam" styleClass="danger-button"/>
+            <Button fx:id="viewTeamPlayersBtn" text="View Players"
+                    onAction="#handleViewTeamPlayers" styleClass="primary-button"/>
+        </HBox>
+    </bottom>
+</BorderPane>
+

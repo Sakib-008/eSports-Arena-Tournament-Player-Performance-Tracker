@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<SplitPane dividerPositions="0.3" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.esports.arena.tabs.TournamentsTabController"
+            stylesheets="@../../css/styles.css">
+    <ListView fx:id="tournamentsList"/>
+    <VBox spacing="15" styleClass="card">
+        <Label text="Tournament Details" styleClass="card-title"/>
+        <Separator/>
+        <GridPane hgap="10" vgap="10">
+            <Label text="Name:" styleClass="grid-label"
+                   GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+            <Label fx:id="tournamentNameLabel" styleClass="grid-value"
+                   GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+            <Label text="Game:" styleClass="grid-label"
+                   GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+            <Label fx:id="tournamentGameLabel" styleClass="grid-value"
+                   GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+            <Label text="Status:" styleClass="grid-label"
+                   GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+            <Label fx:id="tournamentStatusLabel" styleClass="grid-value"
+                   GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+            <Label text="Prize Pool:" styleClass="grid-label"
+                   GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+            <Label fx:id="tournamentPrizeLabel" styleClass="grid-value"
+                   GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+        </GridPane>
+        <HBox spacing="10">
+            <Button fx:id="createTournamentBtn" text="Create Tournament"
+                    onAction="#handleCreateTournament" styleClass="primary-button"/>
+            <Button fx:id="startTournamentBtn" text="Start Tournament"
+                    onAction="#handleStartTournament" styleClass="success-button"/>
+            <Button fx:id="viewMatchesBtn" text="View Matches"
+                    onAction="#handleViewMatches" styleClass="primary-button"/>
+        </HBox>
+    </VBox>
+</SplitPane>
+
