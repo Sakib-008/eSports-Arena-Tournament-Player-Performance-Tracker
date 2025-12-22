@@ -42,7 +42,6 @@ public class PlayerDashboardController {
     @FXML private BarChart<String, Number> performanceChart;
     @FXML private CategoryAxis xAxis;
     @FXML private NumberAxis yAxis;
-    @FXML private Button recordStatsBtn;
 
     // Team Tab
     @FXML private Label myTeamNameLabel;
@@ -503,126 +502,6 @@ public class PlayerDashboardController {
                 mainApp.showMainMenu();
             }
         });
-    }
-
-    @FXML
-    private void handleRecordStats() {
-        if (currentPlayer == null) {
-            MainApp.showError("Error", "No player selected");
-            return;
-        }
-
-        Dialog<MatchStatsInput> dialog = new Dialog<>();
-        dialog.setTitle("Record Match Statistics");
-        dialog.setHeaderText("Enter your match performance");
-
-        ButtonType saveButtonType = new ButtonType("Record", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
-
-        javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-
-        TextField killsField = new TextField("0");
-        TextField deathsField = new TextField("0");
-        TextField assistsField = new TextField("0");
-        CheckBox wonCheckBox = new CheckBox("Won the match");
-
-        grid.add(new Label("Kills:"), 0, 0);
-        grid.add(killsField, 1, 0);
-        grid.add(new Label("Deaths:"), 0, 1);
-        grid.add(deathsField, 1, 1);
-        grid.add(new Label("Assists:"), 0, 2);
-        grid.add(assistsField, 1, 2);
-        grid.add(wonCheckBox, 0, 3, 2, 1);
-
-        dialog.getDialogPane().setContent(grid);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == saveButtonType) {
-                try {
-                    return new MatchStatsInput(
-                            Integer.parseInt(killsField.getText()),
-                            Integer.parseInt(deathsField.getText()),
-                            Integer.parseInt(assistsField.getText()),
-                            wonCheckBox.isSelected()
-                    );
-                } catch (NumberFormatException e) {
-                    MainApp.showError("Invalid Input", "Please enter valid numbers");
-                    return null;
-                }
-            }
-            return null;
-        });
-
-        Optional<MatchStatsInput> result = dialog.showAndWait();
-        result.ifPresent(this::recordMatchStats);
-    }
-
-    private void recordMatchStats(MatchStatsInput stats) {
-        if (stats == null) return;
-
-        Task<Boolean> task = new Task<>() {
-            @Override
-            protected Boolean call() {
-                return playerDAO.updatePlayerStats(
-                        currentPlayer.getId(),
-                        stats.kills,
-                        stats.deaths,
-                        stats.assists,
-                        stats.won
-                );
-            }
-        };
-
-        task.setOnSucceeded(e -> {
-            if (task.getValue()) {
-                MainApp.showInfo("Success", "Match statistics recorded successfully!");
-                // Reload player data to show updated stats
-                Task<Player> reloadTask = new Task<>() {
-                    @Override
-                    protected Player call() {
-                        return playerDAO.getPlayerById(currentPlayer.getId());
-                    }
-                };
-
-                reloadTask.setOnSucceeded(ev -> {
-                    Player updatedPlayer = reloadTask.getValue();
-                    if (updatedPlayer != null) {
-                        // Update the player in the list
-                        int index = allPlayers.indexOf(currentPlayer);
-                        if (index >= 0) {
-                            allPlayers.set(index, updatedPlayer);
-                        }
-                        loadPlayerData(updatedPlayer);
-                    }
-                });
-
-                new Thread(reloadTask).start();
-            } else {
-                MainApp.showError("Error", "Failed to record statistics");
-            }
-        });
-
-        task.setOnFailed(e ->
-                MainApp.showError("Error", "Failed to record statistics"));
-
-        new Thread(task).start();
-    }
-
-    // Helper class for match stats input
-    private static class MatchStatsInput {
-        int kills;
-        int deaths;
-        int assists;
-        boolean won;
-
-        MatchStatsInput(int kills, int deaths, int assists, boolean won) {
-            this.kills = kills;
-            this.deaths = deaths;
-            this.assists = assists;
-            this.won = won;
-        }
     }
 
     // Helper class for displaying vote results

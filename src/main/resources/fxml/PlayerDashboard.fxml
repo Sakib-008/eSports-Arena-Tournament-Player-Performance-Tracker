@@ -1,37 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.chart.BarChart?>
-<?import javafx.scene.chart.CategoryAxis?>
-<?import javafx.scene.chart.NumberAxis?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ListView?>
-<?import javafx.scene.control.Separator?>
-<?import javafx.scene.control.Tab?>
-<?import javafx.scene.control.TabPane?>
-<?import javafx.scene.control.TextArea?>
-<?import javafx.scene.control.ToggleButton?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.chart.*?>
 
-<BorderPane prefHeight="656.0" prefWidth="578.0" stylesheets="@../css/styles.css" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/25" fx:controller="com.esports.arena.PlayerDashboardController">
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.esports.arena.PlayerDashboardController"
+            stylesheets="@../css/styles.css">
 
     <top>
         <VBox styleClass="dashboard-header">
-            <Label styleClass="dashboard-title" text="Player Dashboard" />
-            <HBox alignment="CENTER_LEFT" spacing="15">
-                <padding><Insets top="10" /></padding>
-                <Label style="-fx-text-fill: white;" text="Select Player:" />
-                <ComboBox fx:id="playerSelectCombo" prefWidth="250" />
-                <Region HBox.hgrow="ALWAYS" />
-                <Button fx:id="backToMenuBtn" onAction="#handleBackToMenu" styleClass="header-button" text="Back to Menu" />
+            <Label text="Player Dashboard" styleClass="dashboard-title"/>
+            <HBox spacing="15" alignment="CENTER_LEFT">
+                <padding><Insets top="10"/></padding>
+                <Label text="Select Player:" style="-fx-text-fill: white;"/>
+                <ComboBox fx:id="playerSelectCombo" prefWidth="250"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="backToMenuBtn" text="Back to Menu"
+                        onAction="#handleBackToMenu" styleClass="header-button"/>
             </HBox>
         </VBox>
     </top>
@@ -39,115 +26,108 @@
     <center>
         <TabPane fx:id="playerTabPane" tabClosingPolicy="UNAVAILABLE">
 
+            <!-- Profile Tab -->
             <Tab text="Profile">
                 <VBox spacing="20" style="-fx-padding: 20;">
 
+                    <!-- Player Info Card -->
                     <VBox spacing="10" styleClass="card">
-                        <Label styleClass="card-title" text="Player Information" />
-                        <Separator />
+                        <Label text="Player Information" styleClass="card-title"/>
+                        <Separator/>
                         <GridPane hgap="15" vgap="10">
-                            <Label styleClass="grid-label" text="Username:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                            <Label fx:id="playerNameLabel" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                            <Label text="Username:" styleClass="grid-label"
+                                   GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                            <Label fx:id="playerNameLabel" text="-" styleClass="grid-value"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="0"/>
 
-                            <Label styleClass="grid-label" text="Team:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                            <Label fx:id="playerTeamLabel" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                            <Label text="Team:" styleClass="grid-label"
+                                   GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                            <Label fx:id="playerTeamLabel" text="No Team" styleClass="grid-value"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 
-                            <Label styleClass="grid-label" text="Role:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                            <Label fx:id="playerRoleLabel" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                            <Label text="Role:" styleClass="grid-label"
+                                   GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                            <Label fx:id="playerRoleLabel" text="-" styleClass="grid-value"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="2"/>
 
-                            <Label styleClass="grid-label" text="K/D Ratio:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
-                            <Label fx:id="playerKDLabel" styleClass="grid-value" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+                            <Label text="K/D Ratio:" styleClass="grid-label"
+                                   GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                            <Label fx:id="playerKDLabel" text="0.00" styleClass="grid-value"
+                                   GridPane.columnIndex="3" GridPane.rowIndex="0"/>
 
-                            <Label styleClass="grid-label" text="Win Rate:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-                            <Label fx:id="playerWinRateLabel" styleClass="grid-value" GridPane.columnIndex="3" GridPane.rowIndex="1" />
-                     <columnConstraints>
-                        <ColumnConstraints />
-                        <ColumnConstraints />
-                        <ColumnConstraints />
-                        <ColumnConstraints />
-                     </columnConstraints>
-                     <rowConstraints>
-                        <RowConstraints />
-                        <RowConstraints />
-                        <RowConstraints />
-                     </rowConstraints>
+                            <Label text="Win Rate:" styleClass="grid-label"
+                                   GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                            <Label fx:id="playerWinRateLabel" text="0.0%" styleClass="grid-value"
+                                   GridPane.columnIndex="3" GridPane.rowIndex="1"/>
                         </GridPane>
                     </VBox>
 
+                    <!-- Availability Card -->
                     <VBox spacing="10" styleClass="card">
-                        <Label styleClass="card-title" text="Availability Status" />
-                        <Separator />
-                        <HBox alignment="CENTER_LEFT" spacing="10">
-                            <Label text="I am available:" />
-                            <ToggleButton fx:id="availabilityToggle" text="Available" />
+                        <Label text="Availability Status" styleClass="card-title"/>
+                        <Separator/>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label text="I am available:"/>
+                            <ToggleButton fx:id="availabilityToggle" text="Available"/>
                         </HBox>
-                        <Label text="Reason (if unavailable):" />
-                        <TextArea fx:id="availabilityReasonField" prefRowCount="3" promptText="Enter reason..." />
-                        <Button fx:id="updateAvailabilityBtn" maxWidth="Infinity" onAction="#handleUpdateAvailability" styleClass="success-button" text="Update Status" />
+                        <Label text="Reason (if unavailable):"/>
+                        <TextArea fx:id="availabilityReasonField" prefRowCount="3"
+                                  promptText="Enter reason..."/>
+                        <Button fx:id="updateAvailabilityBtn" text="Update Status"
+                                onAction="#handleUpdateAvailability"
+                                styleClass="success-button" maxWidth="Infinity"/>
                     </VBox>
 
                 </VBox>
             </Tab>
 
+            <!-- Statistics Tab -->
             <Tab text="Statistics">
                 <VBox spacing="20" style="-fx-padding: 20;">
 
+                    <!-- Stats Overview Card -->
                     <VBox spacing="10" styleClass="card">
-                        <Label styleClass="card-title" text="Performance Statistics" />
-                        <Separator />
+                        <Label text="Performance Statistics" styleClass="card-title"/>
+                        <Separator/>
                         <GridPane hgap="30" vgap="15">
                             <VBox spacing="5" GridPane.columnIndex="0" GridPane.rowIndex="0">
-                                <Label styleClass="stat-label" text="Total Kills" />
-                                <Label fx:id="totalKillsLabel" styleClass="stat-value, stat-kills" />
+                                <Label text="Total Kills" styleClass="stat-label"/>
+                                <Label fx:id="totalKillsLabel" text="0" styleClass="stat-value, stat-kills"/>
                             </VBox>
 
                             <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                                <Label styleClass="stat-label" text="Total Deaths" />
-                                <Label fx:id="totalDeathsLabel" styleClass="stat-value, stat-deaths" />
+                                <Label text="Total Deaths" styleClass="stat-label"/>
+                                <Label fx:id="totalDeathsLabel" text="0" styleClass="stat-value, stat-deaths"/>
                             </VBox>
 
                             <VBox spacing="5" GridPane.columnIndex="2" GridPane.rowIndex="0">
-                                <Label styleClass="stat-label" text="Total Assists" />
-                                <Label fx:id="totalAssistsLabel" styleClass="stat-value, stat-assists" />
+                                <Label text="Total Assists" styleClass="stat-label"/>
+                                <Label fx:id="totalAssistsLabel" text="0" styleClass="stat-value, stat-assists"/>
                             </VBox>
 
                             <VBox spacing="5" GridPane.columnIndex="0" GridPane.rowIndex="1">
-                                <Label styleClass="stat-label" text="Matches Played" />
-                                <Label fx:id="matchesPlayedLabel" styleClass="stat-value" />
+                                <Label text="Matches Played" styleClass="stat-label"/>
+                                <Label fx:id="matchesPlayedLabel" text="0" styleClass="stat-value"/>
                             </VBox>
 
                             <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                <Label styleClass="stat-label" text="Matches Won" />
-                                <Label fx:id="matchesWonLabel" styleClass="stat-value" />
+                                <Label text="Matches Won" styleClass="stat-label"/>
+                                <Label fx:id="matchesWonLabel" text="0" styleClass="stat-value"/>
                             </VBox>
-                     <columnConstraints>
-                        <ColumnConstraints />
-                        <ColumnConstraints />
-                        <ColumnConstraints />
-                     </columnConstraints>
-                     <rowConstraints>
-                        <RowConstraints />
-                        <RowConstraints />
-                     </rowConstraints>
                         </GridPane>
                     </VBox>
 
-                    <VBox spacing="10" styleClass="card">
-                        <Label styleClass="card-title" text="Record Match Statistics" />
-                        <Separator />
-                        <Label style="-fx-font-size: 12px;" text="Record your performance from a recent match:" />
-                        <Button fx:id="recordStatsBtn" maxWidth="Infinity" onAction="#handleRecordStats" styleClass="primary-button" text="Record Match Statistics" />
-                    </VBox>
-
+                    <!-- Performance Chart Card -->
                     <VBox spacing="10" styleClass="card" VBox.vgrow="ALWAYS">
-                        <Label styleClass="card-title" text="Performance Chart" />
-                        <Separator />
-                        <BarChart fx:id="performanceChart" legendVisible="false" prefHeight="350">
+                        <Label text="Performance Chart" styleClass="card-title"/>
+                        <Separator/>
+                        <BarChart fx:id="performanceChart"
+                                  legendVisible="false" prefHeight="400">
                             <xAxis>
-                                <CategoryAxis label="Metrics" fx:id="xAxis" />
+                                <CategoryAxis fx:id="xAxis" label="Metrics"/>
                             </xAxis>
                             <yAxis>
-                                <NumberAxis fx:id="yAxis" label="Count" />
+                                <NumberAxis fx:id="yAxis" label="Count"/>
                             </yAxis>
                         </BarChart>
                     </VBox>
@@ -155,69 +135,78 @@
                 </VBox>
             </Tab>
 
+            <!-- Team Tab -->
             <Tab text="My Team">
                 <VBox spacing="20" style="-fx-padding: 20;">
 
+                    <!-- Team Info Card -->
                     <VBox spacing="10" styleClass="card">
-                        <Label styleClass="card-title" text="Team Information" />
-                        <Separator />
+                        <Label text="Team Information" styleClass="card-title"/>
+                        <Separator/>
                         <GridPane hgap="15" vgap="10">
-                            <Label styleClass="grid-label" text="Team Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                            <Label fx:id="myTeamNameLabel" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                            <Label text="Team Name:" styleClass="grid-label"
+                                   GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                            <Label fx:id="myTeamNameLabel" text="Not in a team" styleClass="grid-value"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="0"/>
 
-                            <Label styleClass="grid-label" text="Wins:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                            <Label fx:id="teamWinsLabel" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                            <Label text="Wins:" styleClass="grid-label"
+                                   GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                            <Label fx:id="teamWinsLabel" text="0" styleClass="grid-value"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 
-                            <Label styleClass="grid-label" text="Losses:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-                            <Label fx:id="teamLossesLabel" styleClass="grid-value" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                            <Label text="Losses:" styleClass="grid-label"
+                                   GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                            <Label fx:id="teamLossesLabel" text="0" styleClass="grid-value"
+                                   GridPane.columnIndex="3" GridPane.rowIndex="1"/>
 
-                            <Label styleClass="grid-label" text="Current Leader:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                            <Label fx:id="teamLeaderLabel" styleClass="grid-value" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                     <columnConstraints>
-                        <ColumnConstraints />
-                        <ColumnConstraints />
-                        <ColumnConstraints />
-                        <ColumnConstraints />
-                     </columnConstraints>
-                     <rowConstraints>
-                        <RowConstraints />
-                        <RowConstraints />
-                        <RowConstraints />
-                     </rowConstraints>
+                            <Label text="Current Leader:" styleClass="grid-label"
+                                   GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                            <Label fx:id="teamLeaderLabel" text="N/A" styleClass="grid-value"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="2"/>
                         </GridPane>
                     </VBox>
 
+                    <!-- Team Members Card -->
                     <VBox spacing="10" styleClass="card" VBox.vgrow="ALWAYS">
-                        <Label styleClass="card-title" text="Team Members" />
-                        <Separator />
-                        <ListView fx:id="teamMembersList" VBox.vgrow="ALWAYS" />
+                        <Label text="Team Members" styleClass="card-title"/>
+                        <Separator/>
+                        <ListView fx:id="teamMembersList" VBox.vgrow="ALWAYS"/>
                     </VBox>
 
                 </VBox>
             </Tab>
 
+            <!-- Voting Tab -->
             <Tab text="Leader Voting">
                 <VBox spacing="20" style="-fx-padding: 20;">
 
+                    <!-- Voting Instructions Card -->
                     <VBox spacing="10" styleClass="card">
-                        <Label styleClass="card-title" text="Team Leader Election" />
-                        <Separator />
-                        <Label text="Vote for your preferred team leader. Each team member gets one vote." wrapText="true" />
-                        <HBox alignment="CENTER_LEFT" spacing="10">
-                            <Label style="-fx-font-weight: bold;" text="Your Status:" />
-                            <Label fx:id="votingStatusLabel" style="-fx-font-style: italic; -fx-font-weight: bold;" />
+                        <Label text="Team Leader Election" styleClass="card-title"/>
+                        <Separator/>
+                        <Label text="Vote for your preferred team leader. Each team member gets one vote."
+                               wrapText="true" style="-fx-text-fill: black;"/>
+                        <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-background-color: #f0f0f0; -fx-background-radius: 5;">
+                            <Label text="Your Status:" style="-fx-font-weight: bold; -fx-text-fill: black;"/>
+                            <Label fx:id="votingStatusLabel" text="Select a player to see voting status"
+                                   style="-fx-font-style: italic; -fx-font-weight: bold; -fx-text-fill: #0f3460;"/>
                         </HBox>
                     </VBox>
 
+                    <!-- Candidates Card -->
                     <VBox spacing="10" styleClass="card" VBox.vgrow="ALWAYS">
-                        <HBox alignment="CENTER_LEFT" spacing="10">
-                            <Label styleClass="card-title" text="Select Candidate" HBox.hgrow="ALWAYS" />
-                            <Button fx:id="viewVotingResultsBtn" onAction="#handleViewVotingResults" styleClass="primary-button" text="View Current Results" />
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label text="Select Candidate" styleClass="card-title" HBox.hgrow="ALWAYS"/>
+                            <Button fx:id="viewVotingResultsBtn" text="View Current Results"
+                                    onAction="#handleViewVotingResults"
+                                    styleClass="primary-button"/>
                         </HBox>
-                        <Separator />
-                        <Label style="-fx-font-size: 12px;" text="Click on a team member to select them as your vote:" />
-                        <ListView fx:id="voteCandidatesList" VBox.vgrow="ALWAYS" />
-                        <Button fx:id="castVoteBtn" maxWidth="Infinity" onAction="#handleCastVote" styleClass="success-button" text="Cast Your Vote" />
+                        <Separator/>
+                        <Label text="Click on a team member to select them as your vote:" style="-fx-font-size: 12px;"/>
+                        <ListView fx:id="voteCandidatesList" VBox.vgrow="ALWAYS"/>
+                        <Button fx:id="castVoteBtn" text="Cast Your Vote"
+                                onAction="#handleCastVote"
+                                styleClass="success-button" maxWidth="Infinity"/>
                     </VBox>
 
                 </VBox>
