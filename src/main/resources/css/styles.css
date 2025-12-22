@@ -247,6 +247,44 @@
     -fx-border-width: 2;
 }
 
+/* Centered Form Card */
+.form-card {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-padding: 22;
+    -fx-max-width: 520px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0.0, 0, 5);
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0.5;
+}
+
+.form-row {
+    -fx-alignment: center-left;
+    -fx-spacing: 10px;
+}
+
+.centered-container {
+    -fx-alignment: center;
+}
+
+.form-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-font-size: 13px;
+    -fx-min-width: 100px;
+}
+
+.form-input {
+    -fx-pref-width: 300px;
+    -fx-font-size: 13px;
+    -fx-padding: 8 10;
+}
+
+.form-input:focused {
+    -fx-border-color: #0f3460;
+    -fx-border-width: 2;
+}
+
 /* Toggle Button */
 .toggle-button {
     -fx-background-color: #bdc3c7;

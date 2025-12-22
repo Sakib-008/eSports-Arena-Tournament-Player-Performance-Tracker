@@ -8,17 +8,22 @@
             stylesheets="@../../css/styles.css">
 
     <center>
-        <TableView fx:id="playersTable">
-            <columns>
-                <TableColumn fx:id="playerUsernameCol" text="Username" prefWidth="120"/>
-                <TableColumn fx:id="playerRealNameCol" text="Real Name" prefWidth="120"/>
-                <TableColumn fx:id="playerRoleCol" text="Role" prefWidth="100"/>
-                <TableColumn fx:id="playerAvailabilityCol" text="Status" prefWidth="100"/>
-                <TableColumn fx:id="playerKillsCol" text="Kills" prefWidth="60"/>
-                <TableColumn fx:id="playerDeathsCol" text="Deaths" prefWidth="60"/>
-                <TableColumn fx:id="playerKDCol" text="K/D" prefWidth="70"/>
-            </columns>
-        </TableView>
+        <AnchorPane>
+            <children>
+                <TableView fx:id="playersTable" AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0"
+                           AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+                    <columns>
+                        <TableColumn fx:id="playerUsernameCol" text="Username" prefWidth="120"/>
+                        <TableColumn fx:id="playerRealNameCol" text="Real Name" prefWidth="120"/>
+                        <TableColumn fx:id="playerRoleCol" text="Role" prefWidth="100"/>
+                        <TableColumn fx:id="playerAvailabilityCol" text="Status" prefWidth="100"/>
+                        <TableColumn fx:id="playerKillsCol" text="Kills" prefWidth="60"/>
+                        <TableColumn fx:id="playerDeathsCol" text="Deaths" prefWidth="60"/>
+                        <TableColumn fx:id="playerKDCol" text="K/D" prefWidth="70"/>
+                    </columns>
+                </TableView>
+            </children>
+        </AnchorPane>
     </center>
     <bottom>
         <HBox spacing="10" style="-fx-padding: 10;">

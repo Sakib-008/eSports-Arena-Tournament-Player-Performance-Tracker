@@ -11,17 +11,22 @@
     <center>
         <VBox alignment="CENTER" spacing="20" style="-fx-padding: 60;">
 
-            <Label text="Player Login" styleClass="dashboard-title" style="-fx-text-fill: #0f3460;"/>
+            <Label text="👤 Player Login" styleClass="dashboard-title" style="-fx-text-fill: #0f3460;"/>
             <Label text="Access your player dashboard" style="-fx-text-fill: #666; -fx-font-size: 14px;"/>
 
             <Separator />
 
-            <GridPane hgap="15" vgap="15" style="-fx-padding: 20; -fx-background-color: white; -fx-background-radius: 5;">
-                <Label text="Username:" GridPane.rowIndex="0" GridPane.columnIndex="0" style="-fx-font-weight: bold;" />
-                <TextField fx:id="usernameField" promptText="Enter your username" GridPane.rowIndex="0" GridPane.columnIndex="1" prefWidth="250"/>
+            <GridPane hgap="15" vgap="15" alignment="CENTER" styleClass="form-card centered-container" style="-fx-padding: 20;">
+                <columnConstraints>
+                    <ColumnConstraints halignment="RIGHT" />
+                    <ColumnConstraints halignment="LEFT" />
+                </columnConstraints>
 
-                <Label text="Password:" GridPane.rowIndex="1" GridPane.columnIndex="0" style="-fx-font-weight: bold;" />
-                <PasswordField fx:id="passwordField" promptText="Enter your password" GridPane.rowIndex="1" GridPane.columnIndex="1" />
+                <Label text="Username:" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="form-label" />
+                <TextField fx:id="usernameField" promptText="Enter your username" GridPane.rowIndex="0" GridPane.columnIndex="1" styleClass="form-input" />
+
+                <Label text="Password:" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="form-label" />
+                <PasswordField fx:id="passwordField" promptText="Enter your password" GridPane.rowIndex="1" GridPane.columnIndex="1" styleClass="form-input" />
             </GridPane>
 
             <HBox spacing="10" alignment="CENTER">

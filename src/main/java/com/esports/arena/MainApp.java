@@ -21,7 +21,7 @@ public class MainApp extends Application {
         this.primaryStage = stage;
         primaryStage.setTitle("eSports Arena - Tournament & Player Performance Tracker");
 
-//        // Set fullscreen
+        // Set fullscreen
 //        primaryStage.setMaximized(true);
 //        primaryStage.setFullScreen(false); // Use maximized instead of fullscreen for better control
 
@@ -74,6 +74,8 @@ public class MainApp extends Application {
 
             OrganizerDashboardController controller = loader.getController();
             controller.setMainApp(this);
+            // Inject MainApp into any tab controllers that need it
+            controller.injectMainAppToTabs();
 
             primaryStage.setScene(scene);
         } catch (IOException e) {
@@ -92,6 +94,8 @@ public class MainApp extends Application {
             controller.setMainApp(this);
             if (currentPlayer != null) {
                 controller.setCurrentPlayer(currentPlayer);
+                // Refresh player data to get latest team assignment
+                controller.refreshPlayerData();
             }
 
             primaryStage.setScene(scene);

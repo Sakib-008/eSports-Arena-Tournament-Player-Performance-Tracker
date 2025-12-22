@@ -46,6 +46,7 @@ public class PlayersTabController {
     private PlayerDAO playerDAO;
     private ObservableList<Player> playersData;
     private ObservableList<Team> teamsData;
+    private com.esports.arena.MainApp mainApp;
 
     public void initialize(PlayerDAO playerDAO, TeamDAO teamDAO, ObservableList<Team> teamsData) {
         this.playerDAO = playerDAO;
@@ -53,6 +54,10 @@ public class PlayersTabController {
         this.playersData = FXCollections.observableArrayList();
         setupPlayersTable();
         loadPlayers();
+    }
+
+    public void setMainApp(MainApp mainApp) {
+        this.mainApp = mainApp;
     }
 
     private void setupPlayersTable() {
@@ -150,6 +155,22 @@ public class PlayersTabController {
         TextField matchesPlayedField = new TextField(String.valueOf(player.getMatchesPlayed()));
         TextField matchesWonField = new TextField(String.valueOf(player.getMatchesWon()));
 
+        boolean isSelf;
+        if (this.mainApp != null && this.mainApp.getCurrentPlayer() != null) {
+            isSelf = this.mainApp.getCurrentPlayer().getId() == player.getId();
+        } else {
+            isSelf = false;
+        }
+
+        if (isSelf) {
+            // Prevent players from editing their own recorded statistics
+            killsField.setDisable(true);
+            deathsField.setDisable(true);
+            assistsField.setDisable(true);
+            matchesPlayedField.setDisable(true);
+            matchesWonField.setDisable(true);
+        }
+
         grid.add(new Label("Username:"), 0, 0);
         grid.add(usernameField, 1, 0);
         grid.add(new Label("Real Name:"), 0, 1);
@@ -188,11 +209,13 @@ public class PlayersTabController {
                 player.setTeamId(selectedTeam != null ? selectedTeam.getId() : null);
 
                 try {
-                    player.setTotalKills(Integer.parseInt(killsField.getText()));
-                    player.setTotalDeaths(Integer.parseInt(deathsField.getText()));
-                    player.setTotalAssists(Integer.parseInt(assistsField.getText()));
-                    player.setMatchesPlayed(Integer.parseInt(matchesPlayedField.getText()));
-                    player.setMatchesWon(Integer.parseInt(matchesWonField.getText()));
+                    if (!isSelf) {
+                        player.setTotalKills(Integer.parseInt(killsField.getText()));
+                        player.setTotalDeaths(Integer.parseInt(deathsField.getText()));
+                        player.setTotalAssists(Integer.parseInt(assistsField.getText()));
+                        player.setMatchesPlayed(Integer.parseInt(matchesPlayedField.getText()));
+                        player.setMatchesWon(Integer.parseInt(matchesWonField.getText()));
+                    }
                 } catch (NumberFormatException e) {
                     MainApp.showError("Invalid Input", "Please enter valid numbers for stats");
                     return null;

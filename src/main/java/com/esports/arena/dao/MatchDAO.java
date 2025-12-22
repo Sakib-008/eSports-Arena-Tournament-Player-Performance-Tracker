@@ -138,6 +138,27 @@ public class MatchDAO {
         return matches;
     }
 
+    public List<Match> getAllMatches() {
+        List<Match> matches = new ArrayList<>();
+        String sql = "SELECT * FROM matches ORDER BY scheduled_time DESC";
+
+        dbManager.getLock().readLock().lock();
+        try (Statement stmt = dbManager.getConnection().createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                Match match = extractMatch(rs);
+                loadPlayerStats(match);
+                matches.add(match);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting all matches: " + e.getMessage());
+        } finally {
+            dbManager.getLock().readLock().unlock();
+        }
+        return matches;
+    }
+
     public CompletableFuture<Boolean> updateMatchAsync(Match match) {
         return CompletableFuture.supplyAsync(() -> updateMatch(match), executor);
     }

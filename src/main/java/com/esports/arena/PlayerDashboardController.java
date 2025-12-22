@@ -6,8 +6,11 @@ import java.util.Map;
 import com.esports.arena.dao.LeaderVoteDAO;
 import com.esports.arena.dao.PlayerDAO;
 import com.esports.arena.dao.TeamDAO;
+import com.esports.arena.dao.TournamentDAO;
 import com.esports.arena.model.Player;
 import com.esports.arena.model.Team;
+import com.esports.arena.model.Tournament;
+import com.esports.arena.service.TournamentStatsService;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -55,6 +58,14 @@ public class PlayerDashboardController {
     @FXML private Label totalAssistsLabel;
     @FXML private Label matchesPlayedLabel;
     @FXML private Label matchesWonLabel;
+    @FXML private javafx.scene.control.ComboBox<Tournament> tournamentCombo;
+    @FXML private Label tournamentKillsLabel;
+    @FXML private Label tournamentDeathsLabel;
+    @FXML private Label tournamentAssistsLabel;
+    @FXML private Label tournamentMatchesPlayedLabel;
+    @FXML private Label tournamentMatchesWonLabel;
+    @FXML private Label tournamentKDLabel;
+    @FXML private Label tournamentWinRateLabel;
     @FXML private BarChart<String, Number> performanceChart;
     @FXML private CategoryAxis xAxis;
     @FXML private NumberAxis yAxis;
@@ -78,6 +89,8 @@ public class PlayerDashboardController {
 
     private MainApp mainApp;
     private PlayerDAO playerDAO;
+    private TournamentDAO tournamentDAO;
+    private TournamentStatsService tournamentStatsService;
     private TeamDAO teamDAO;
     private LeaderVoteDAO voteDAO;
 
@@ -101,6 +114,8 @@ public class PlayerDashboardController {
         playerDAO = new PlayerDAO();
         teamDAO = new TeamDAO();
         voteDAO = new LeaderVoteDAO();
+        tournamentDAO = new TournamentDAO();
+        tournamentStatsService = new TournamentStatsService();
 
         allPlayers = FXCollections.observableArrayList();
         teamMembers = FXCollections.observableArrayList();
@@ -108,13 +123,138 @@ public class PlayerDashboardController {
 
         setupAvailabilityToggle();
         setupListViews();
-    setupStatsInputs();
+        setupStatsInputs();
+        setupTournamentCombo();
 
         loadAllPlayers();
+        loadTournaments();
 
         // If currentPlayer was set from login, display it
         if (currentPlayer != null) {
             loadPlayerData(currentPlayer);
+        }
+
+        // Refresh player data when tab is selected to get latest team assignment
+        if (playerTabPane != null) {
+            playerTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+                if (currentPlayer != null && newTab != null) {
+                    refreshPlayerData();
+                }
+            });
+        }
+    }
+
+    private void setupTournamentCombo() {
+        if (tournamentCombo != null) {
+            tournamentCombo.setCellFactory(param -> new ListCell<Tournament>() {
+                @Override
+                protected void updateItem(Tournament item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? "Overall Stats" : item.getName());
+                }
+            });
+
+            tournamentCombo.setButtonCell(new ListCell<Tournament>() {
+                @Override
+                protected void updateItem(Tournament item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? "Overall Stats" : item.getName());
+                }
+            });
+
+            tournamentCombo.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+                if (currentPlayer != null) {
+                    loadTournamentStats(newVal);
+                }
+            });
+        }
+    }
+
+    private void loadTournaments() {
+        Task<List<Tournament>> task = new Task<>() {
+            @Override
+            protected List<Tournament> call() {
+                return tournamentDAO.getAllTournaments();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            if (tournamentCombo != null) {
+                List<Tournament> tournaments = task.getValue();
+                tournamentCombo.getItems().clear();
+                tournamentCombo.getItems().add(null); // Add null for "Overall Stats"
+                tournamentCombo.getItems().addAll(tournaments);
+                tournamentCombo.getSelectionModel().select(0); // Select "Overall Stats"
+            }
+        });
+
+        task.setOnFailed(e ->
+                MainApp.showError("Error", "Failed to load tournaments"));
+
+        new Thread(task).start();
+    }
+
+    private void loadTournamentStats(Tournament tournament) {
+        if (currentPlayer == null) return;
+
+        if (tournament == null) {
+            // Show overall stats
+            if (currentPlayer != null) {
+                tournamentKillsLabel.setText(String.valueOf(currentPlayer.getTotalKills()));
+                tournamentDeathsLabel.setText(String.valueOf(currentPlayer.getTotalDeaths()));
+                tournamentAssistsLabel.setText(String.valueOf(currentPlayer.getTotalAssists()));
+                tournamentMatchesPlayedLabel.setText(String.valueOf(currentPlayer.getMatchesPlayed()));
+                tournamentMatchesWonLabel.setText(String.valueOf(currentPlayer.getMatchesWon()));
+                tournamentKDLabel.setText(String.format("%.2f", currentPlayer.getKdRatio()));
+                tournamentWinRateLabel.setText(String.format("%.1f%%", currentPlayer.getWinRate()));
+            }
+            return;
+        }
+
+        Task<TournamentStatsService.TournamentPlayerStats> task = new Task<>() {
+            @Override
+            protected TournamentStatsService.TournamentPlayerStats call() {
+                return tournamentStatsService.getPlayerTournamentStats(currentPlayer.getId(), tournament.getId());
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            TournamentStatsService.TournamentPlayerStats stats = task.getValue();
+            tournamentKillsLabel.setText(String.valueOf(stats.kills));
+            tournamentDeathsLabel.setText(String.valueOf(stats.deaths));
+            tournamentAssistsLabel.setText(String.valueOf(stats.assists));
+            tournamentMatchesPlayedLabel.setText(String.valueOf(stats.matchesPlayed));
+            tournamentMatchesWonLabel.setText(String.valueOf(stats.matchesWon));
+            tournamentKDLabel.setText(String.format("%.2f", stats.getKdRatio()));
+            tournamentWinRateLabel.setText(String.format("%.1f%%", stats.getWinRate()));
+        });
+
+        task.setOnFailed(e ->
+                MainApp.showError("Error", "Failed to load tournament stats"));
+
+        new Thread(task).start();
+    }
+
+    public void refreshPlayerData() {
+        if (currentPlayer != null) {
+            Task<Player> refreshTask = new Task<>() {
+                @Override
+                protected Player call() {
+                    return playerDAO.getPlayerById(currentPlayer.getId());
+                }
+            };
+
+            refreshTask.setOnSucceeded(e -> {
+                Player refreshedPlayer = refreshTask.getValue();
+                if (refreshedPlayer != null) {
+                    loadPlayerData(refreshedPlayer);
+                }
+            });
+
+            refreshTask.setOnFailed(e ->
+                    MainApp.showError("Error", "Failed to refresh player data"));
+
+            new Thread(refreshTask).start();
         }
     }
 
@@ -197,6 +337,13 @@ public class PlayerDashboardController {
         totalAssistsLabel.setText(String.valueOf(player.getTotalAssists()));
         matchesPlayedLabel.setText(String.valueOf(player.getMatchesPlayed()));
         matchesWonLabel.setText(String.valueOf(player.getMatchesWon()));
+
+        // Load tournament stats (will show overall if no tournament selected)
+        if (tournamentCombo != null && tournamentCombo.getSelectionModel().getSelectedItem() != null) {
+            loadTournamentStats(tournamentCombo.getSelectionModel().getSelectedItem());
+        } else {
+            loadTournamentStats(null); // Show overall stats
+        }
 
         // Update availability
         availabilityToggle.setSelected(player.isAvailable());

@@ -7,7 +7,6 @@ import com.esports.arena.dao.MatchDAO;
 import com.esports.arena.dao.PlayerDAO;
 import com.esports.arena.dao.TeamDAO;
 import com.esports.arena.dao.TournamentDAO;
-import com.esports.arena.model.Match;
 import com.esports.arena.model.Team;
 import com.esports.arena.service.JsonExportImportService;
 import com.esports.arena.tabs.LeaderboardTabController;
@@ -54,6 +53,12 @@ public class OrganizerDashboardController {
         this.mainApp = mainApp;
     }
 
+    public void injectMainAppToTabs() {
+        if (playersTabController != null) {
+            playersTabController.setMainApp(this.mainApp);
+        }
+    }
+
     @FXML
     private void initialize() {
         // Initialize DAOs and services
@@ -89,13 +94,19 @@ public class OrganizerDashboardController {
             playersTabController = playersLoader.getController();
             playersTabController.initialize(playerDAO, teamDAO, teamsData);
 
+            // Matches Tab (load first so we can pass reference to tournaments)
+            Tab matchesTab = mainTabPane.getTabs().get(4);
+            FXMLLoader matchesLoader = new FXMLLoader(getClass().getResource("/fxml/tabs/MatchesTab.fxml"));
+            matchesTab.setContent(matchesLoader.load());
+            matchesTabController = matchesLoader.getController();
+            matchesTabController.initialize(matchDAO, teamDAO, playerDAO, teamsData);
+
             // Tournaments Tab
             Tab tournamentsTab = mainTabPane.getTabs().get(2);
             FXMLLoader tournamentsLoader = new FXMLLoader(getClass().getResource("/fxml/tabs/TournamentsTab.fxml"));
             tournamentsTab.setContent(tournamentsLoader.load());
             tournamentsTabController = tournamentsLoader.getController();
-            tournamentsTabController.initialize(tournamentDAO, matchDAO, teamDAO, teamsData, 
-                    () -> mainTabPane.getSelectionModel().select(4)); // Switch to Matches tab
+            tournamentsTabController.initialize(tournamentDAO, matchDAO, teamDAO, teamsData, matchesTabController);
 
             // Leaderboard Tab
             Tab leaderboardTab = mainTabPane.getTabs().get(3);
@@ -103,13 +114,6 @@ public class OrganizerDashboardController {
             leaderboardTab.setContent(leaderboardLoader.load());
             leaderboardTabController = leaderboardLoader.getController();
             leaderboardTabController.initialize(teamDAO);
-
-            // Matches Tab
-            Tab matchesTab = mainTabPane.getTabs().get(4);
-            FXMLLoader matchesLoader = new FXMLLoader(getClass().getResource("/fxml/tabs/MatchesTab.fxml"));
-            matchesTab.setContent(matchesLoader.load());
-            matchesTabController = matchesLoader.getController();
-            matchesTabController.initialize(matchDAO, teamDAO, playerDAO, teamsData);
 
         } catch (Exception e) {
             System.err.println("Error initializing tab controllers: " + e.getMessage());

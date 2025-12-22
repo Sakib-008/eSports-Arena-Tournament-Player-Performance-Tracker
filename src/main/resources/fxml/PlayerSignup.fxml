@@ -11,31 +11,38 @@
     <center>
         <VBox alignment="CENTER" spacing="20" style="-fx-padding: 40;">
 
-            <Label text="Player Signup" styleClass="dashboard-title" style="-fx-text-fill: #0f3460;"/>
+            <Label text="✨ Player Signup" styleClass="dashboard-title" style="-fx-text-fill: #0f3460;"/>
             <Label text="Create a new player account" style="-fx-text-fill: #666; -fx-font-size: 14px;"/>
 
             <Separator />
 
-            <ScrollPane style="-fx-background-color: transparent;">
-                <GridPane hgap="15" vgap="15" style="-fx-padding: 20; -fx-background-color: white; -fx-background-radius: 5;">
-                    <Label text="Username:" GridPane.rowIndex="0" GridPane.columnIndex="0" style="-fx-font-weight: bold;" />
-                    <TextField fx:id="usernameField" promptText="Choose a username" GridPane.rowIndex="0" GridPane.columnIndex="1" prefWidth="250"/>
+            <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
+                <content>
+                    <GridPane hgap="15" vgap="15" alignment="CENTER" styleClass="form-card centered-container" style="-fx-padding: 20;">
+                        <columnConstraints>
+                            <ColumnConstraints halignment="RIGHT" />
+                            <ColumnConstraints halignment="LEFT" />
+                        </columnConstraints>
 
-                    <Label text="Password:" GridPane.rowIndex="1" GridPane.columnIndex="0" style="-fx-font-weight: bold;" />
-                    <PasswordField fx:id="passwordField" promptText="Enter password" GridPane.rowIndex="1" GridPane.columnIndex="1" />
+                        <Label text="Username:" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="form-label" />
+                        <TextField fx:id="usernameField" promptText="Choose a username" GridPane.rowIndex="0" GridPane.columnIndex="1" styleClass="form-input" />
 
-                    <Label text="Confirm Password:" GridPane.rowIndex="2" GridPane.columnIndex="0" style="-fx-font-weight: bold;" />
-                    <PasswordField fx:id="confirmPasswordField" promptText="Confirm password" GridPane.rowIndex="2" GridPane.columnIndex="1" />
+                        <Label text="Password:" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="form-label" />
+                        <PasswordField fx:id="passwordField" promptText="Enter password" GridPane.rowIndex="1" GridPane.columnIndex="1" styleClass="form-input" />
 
-                    <Label text="Real Name:" GridPane.rowIndex="3" GridPane.columnIndex="0" style="-fx-font-weight: bold;" />
-                    <TextField fx:id="realNameField" promptText="Your full name" GridPane.rowIndex="3" GridPane.columnIndex="1" />
+                        <Label text="Confirm Password:" GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="form-label" />
+                        <PasswordField fx:id="confirmPasswordField" promptText="Confirm password" GridPane.rowIndex="2" GridPane.columnIndex="1" styleClass="form-input" />
 
-                    <Label text="Email:" GridPane.rowIndex="4" GridPane.columnIndex="0" style="-fx-font-weight: bold;" />
-                    <TextField fx:id="emailField" promptText="Your email address" GridPane.rowIndex="4" GridPane.columnIndex="1" />
+                        <Label text="Real Name:" GridPane.rowIndex="3" GridPane.columnIndex="0" styleClass="form-label" />
+                        <TextField fx:id="realNameField" promptText="Your full name" GridPane.rowIndex="3" GridPane.columnIndex="1" styleClass="form-input" />
 
-                    <Label text="Role:" GridPane.rowIndex="5" GridPane.columnIndex="0" style="-fx-font-weight: bold;" />
-                    <ComboBox fx:id="roleCombo" prefWidth="250" GridPane.rowIndex="5" GridPane.columnIndex="1" />
-                </GridPane>
+                        <Label text="Email:" GridPane.rowIndex="4" GridPane.columnIndex="0" styleClass="form-label" />
+                        <TextField fx:id="emailField" promptText="Your email address" GridPane.rowIndex="4" GridPane.columnIndex="1" styleClass="form-input" />
+
+                        <Label text="Role:" GridPane.rowIndex="5" GridPane.columnIndex="0" styleClass="form-label" />
+                        <ComboBox fx:id="roleCombo" GridPane.rowIndex="5" GridPane.columnIndex="1" styleClass="form-input" />
+                    </GridPane>
+                </content>
             </ScrollPane>
 
             <HBox spacing="10" alignment="CENTER">

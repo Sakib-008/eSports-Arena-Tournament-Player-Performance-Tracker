@@ -27,12 +27,20 @@
                    GridPane.columnIndex="0" GridPane.rowIndex="3"/>
             <Label fx:id="tournamentPrizeLabel" styleClass="grid-value"
                    GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+            <Label text="Registered Teams:" styleClass="grid-label"
+                   GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+            <Label fx:id="tournamentTeamsLabel" styleClass="grid-value"
+                   GridPane.columnIndex="1" GridPane.rowIndex="4"/>
         </GridPane>
         <HBox spacing="10">
             <Button fx:id="createTournamentBtn" text="Create Tournament"
                     onAction="#handleCreateTournament" styleClass="primary-button"/>
             <Button fx:id="startTournamentBtn" text="Start Tournament"
                     onAction="#handleStartTournament" styleClass="success-button"/>
+            <Button fx:id="manageTeamsBtn" text="Manage Teams"
+                    onAction="#handleManageTeams" styleClass="primary-button"/>
+            <Button fx:id="createMatchBtn" text="Create Match"
+                    onAction="#handleCreateMatch" styleClass="success-button"/>
             <Button fx:id="viewMatchesBtn" text="View Matches"
                     onAction="#handleViewMatches" styleClass="primary-button"/>
         </HBox>
