@@ -28,6 +28,8 @@
         <HBox spacing="10" style="-fx-padding: 10;">
             <Button fx:id="viewMatchDetailsBtn" text="View Match Details"
                     onAction="#handleViewMatchDetails" styleClass="primary-button"/>
+            <Button fx:id="editMatchStatsBtn" text="Edit Match Stats"
+                    onAction="#handleEditMatchStats" styleClass="secondary-button"/>
         </HBox>
     </bottom>
 </BorderPane>

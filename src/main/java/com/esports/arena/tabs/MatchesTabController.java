@@ -37,6 +37,7 @@ public class MatchesTabController {
     @FXML private TableColumn<Match, String> matchStatusCol;
     @FXML private TableColumn<Match, String> matchRoundCol;
     @FXML private Button viewMatchDetailsBtn;
+    @FXML private Button editMatchStatsBtn;
 
     private MatchDAO matchDAO;
     private TeamDAO teamDAO;
@@ -44,8 +45,7 @@ public class MatchesTabController {
     private ObservableList<Match> matchesData;
     private ObservableList<Team> teamsData;
 
-    public void initialize(MatchDAO matchDAO, TeamDAO teamDAO, PlayerDAO playerDAO, 
-                          ObservableList<Team> teamsData) {
+    public void initialize(MatchDAO matchDAO, TeamDAO teamDAO, PlayerDAO playerDAO, ObservableList<Team> teamsData) {
         this.matchDAO = matchDAO;
         this.teamDAO = teamDAO;
         this.playerDAO = playerDAO;
@@ -100,7 +100,6 @@ public class MatchesTabController {
             @Override
             protected List<Match> call() {
                 List<Match> matches = matchDAO.getMatchesByTournament(tournamentId);
-                // If no matches exist, return empty list.
                 return matches != null ? matches : new java.util.ArrayList<>();
             }
         };
@@ -158,6 +157,112 @@ public class MatchesTabController {
         Match match = matchDAO.getMatchById(selected.getId());
         if (match == null) {
             MainApp.showError("Error", "Failed to load match details");
+            return;
+        }
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Match Details - " + match.getId());
+        dialog.setHeaderText("View Match Details and Player Stats");
+
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+        VBox content = new VBox(12);
+        content.setPrefWidth(700);
+
+        Team team1 = teamDAO.getTeamById(match.getTeam1Id());
+        Team team2 = teamDAO.getTeamById(match.getTeam2Id());
+
+        Label teamsLabel = new Label((team1 != null ? team1.getName() : "Team 1") + " vs " + (team2 != null ? team2.getName() : "Team 2"));
+        teamsLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+
+        HBox scoreBox = new HBox(10);
+        Label team1ScoreLabel = new Label("Score: " + match.getTeam1Score() + " - " + match.getTeam2Score());
+        team1ScoreLabel.setStyle("-fx-font-size: 12px;");
+        Label statusLabel = new Label("Status: " + match.getStatus().toString());
+        statusLabel.setStyle("-fx-font-size: 12px;");
+
+        scoreBox.getChildren().addAll(team1ScoreLabel, statusLabel);
+
+        content.getChildren().addAll(teamsLabel, scoreBox, new Separator());
+
+        List<Player> playersTeam1 = playerDAO.getPlayersByTeam(match.getTeam1Id());
+        List<Player> playersTeam2 = playerDAO.getPlayersByTeam(match.getTeam2Id());
+
+        VBox playersContainer = new VBox(10);
+
+        List<com.esports.arena.model.PlayerMatchStats> allStats = matchDAO.getPlayerStatsByMatch(match.getId());
+
+        if (!playersTeam1.isEmpty()) {
+            playersContainer.getChildren().add(new Label("" + (team1 != null ? team1.getName() : "Team 1") + " Players"));
+            for (Player p : playersTeam1) {
+                com.esports.arena.model.PlayerMatchStats pStats = allStats.stream()
+                        .filter(s -> s.getPlayerId() == p.getId())
+                        .findFirst().orElse(null);
+                
+                int kills = pStats != null ? pStats.getKills() : 0;
+                int deaths = pStats != null ? pStats.getDeaths() : 0;
+                int assists = pStats != null ? pStats.getAssists() : 0;
+                
+                HBox row = new HBox(8);
+                row.getChildren().addAll(
+                    new Label(p.getUsername()),
+                    new Label("K: " + kills),
+                    new Label("D: " + deaths),
+                    new Label("A: " + assists)
+                );
+                playersContainer.getChildren().add(row);
+            }
+        }
+
+        if (!playersTeam2.isEmpty()) {
+            playersContainer.getChildren().add(new Label("" + (team2 != null ? team2.getName() : "Team 2") + " Players"));
+            for (Player p : playersTeam2) {
+                com.esports.arena.model.PlayerMatchStats pStats = allStats.stream()
+                        .filter(s -> s.getPlayerId() == p.getId())
+                        .findFirst().orElse(null);
+                
+                int kills = pStats != null ? pStats.getKills() : 0;
+                int deaths = pStats != null ? pStats.getDeaths() : 0;
+                int assists = pStats != null ? pStats.getAssists() : 0;
+                
+                HBox row = new HBox(8);
+                row.getChildren().addAll(
+                    new Label(p.getUsername()),
+                    new Label("K: " + kills),
+                    new Label("D: " + deaths),
+                    new Label("A: " + assists)
+                );
+                playersContainer.getChildren().add(row);
+            }
+        }
+
+        ScrollPane scroll = new ScrollPane(playersContainer);
+        scroll.setFitToWidth(true);
+        scroll.setPrefHeight(300);
+
+        content.getChildren().add(scroll);
+
+        dialog.getDialogPane().setContent(content);
+        dialog.showAndWait();
+    }
+
+    @FXML
+    private void handleEditMatchStats() {
+        Match selected = matchesTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            MainApp.showError("No Selection", "Please select a match to edit");
+            return;
+        }
+
+        Match match = matchDAO.getMatchById(selected.getId());
+        if (match == null) {
+            MainApp.showError("Error", "Failed to load match details");
+            return;
+        }
+
+        // Prevent editing completed matches
+        if (match.getStatus() == Match.MatchStatus.COMPLETED) {
+            MainApp.showError("Match Completed", "Cannot edit statistics for matches that are already completed");
             return;
         }
 
@@ -314,7 +419,28 @@ public class MatchesTabController {
 
                 task.setOnSucceeded(e -> {
                     MainApp.showInfo("Success", "Match finalized and stats recorded");
-                    loadMatchesForTournament(match.getTournamentId());
+                    // Real-time update: fetch the updated match and refresh it in the table immediately
+                    Task<Match> refreshTask = new Task<>() {
+                        @Override
+                        protected Match call() {
+                            return matchDAO.getMatchById(match.getId());
+                        }
+                    };
+                    
+                    refreshTask.setOnSucceeded(refreshEvent -> {
+                        Match updatedMatch = refreshTask.getValue();
+                        if (updatedMatch != null) {
+                            // Find and replace the match in the observable list
+                            for (int i = 0; i < matchesData.size(); i++) {
+                                if (matchesData.get(i).getId() == updatedMatch.getId()) {
+                                    matchesData.set(i, updatedMatch);
+                                    break;
+                                }
+                            }
+                        }
+                    });
+                    
+                    new Thread(refreshTask).start();
                 });
 
                 task.setOnFailed(e -> {
@@ -328,6 +454,10 @@ public class MatchesTabController {
         });
 
         dialog.showAndWait();
+    }
+
+    public void refreshMatchesData() {
+        loadAllMatches();
     }
 }
 
