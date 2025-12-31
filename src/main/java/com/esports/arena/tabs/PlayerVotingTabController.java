@@ -139,13 +139,13 @@ public class PlayerVotingTabController {
         dialog.setTitle("Voting Results");
         dialog.setHeaderText("Current Leader Election Results");
 
-        TableView<Object> resultsTable = new TableView<>();
+        TableView<VoteResultDisplay> resultsTable = new TableView<>();
         resultsTable.setPrefWidth(400);
         resultsTable.setPrefHeight(300);
 
-        TableColumn<Object, String> nameCol = new TableColumn<>("Candidate");
+        TableColumn<VoteResultDisplay, String> nameCol = new TableColumn<>("Candidate");
         nameCol.setPrefWidth(250);
-        TableColumn<Object, Integer> votesCol = new TableColumn<>("Votes");
+        TableColumn<VoteResultDisplay, Integer> votesCol = new TableColumn<>("Votes");
         votesCol.setPrefWidth(100);
 
         resultsTable.getColumns().addAll(nameCol, votesCol);
@@ -166,7 +166,10 @@ public class PlayerVotingTabController {
                 results.add(new VoteResultDisplay(p.getUsername(), votes));
             }
             results.sort((a,b)->Integer.compare(b.votes, a.votes));
-            // resultsTable.setItems(results);
+            
+            nameCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().name));
+            votesCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleIntegerProperty(cellData.getValue().votes).asObject());
+            resultsTable.setItems(results);
         });
 
         new Thread(task).start();

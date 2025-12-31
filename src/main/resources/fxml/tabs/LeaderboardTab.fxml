@@ -7,6 +7,14 @@
             fx:controller="com.esports.arena.tabs.LeaderboardTabController"
             stylesheets="@../../css/styles.css">
 
+    <top>
+        <HBox style="-fx-padding: 10; -fx-spacing: 10;">
+            <Label text="Tournament Filter:" style="-fx-font-weight: bold;"/>
+            <ComboBox fx:id="tournamentFilterCombo" prefWidth="250"/>
+            <Button text="Apply" onAction="#handleApplyTournamentFilter" styleClass="primary-button"/>
+            <Button text="Overall Leaderboard" onAction="#handleShowOverallLeaderboard" styleClass="primary-button"/>
+        </HBox>
+    </top>
     <center>
         <TableView fx:id="leaderboardTable">
             <columns>

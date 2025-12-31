@@ -313,8 +313,18 @@ public class MatchesTabController {
                 PlayerInputs pi = new PlayerInputs();
                 pi.playerId = p.getId();
                 HBox row = new HBox(8);
-                row.getChildren().addAll(new Label(p.getUsername()), new Label("Kills:"), pi.kills,
-                        new Label("Deaths:"), pi.deaths, new Label("Assists:"), pi.assists);
+                String statusIndicator = p.isAvailable() ? "✓" : "✗ UNAVAILABLE";
+                row.getChildren().addAll(
+                        new Label(p.getUsername() + " [" + statusIndicator + "]"), 
+                        new Label("Kills:"), pi.kills,
+                        new Label("Deaths:"), pi.deaths, 
+                        new Label("Assists:"), pi.assists);
+                if (!p.isAvailable()) {
+                    row.setStyle("-fx-opacity: 0.6;");
+                    pi.kills.setDisable(true);
+                    pi.deaths.setDisable(true);
+                    pi.assists.setDisable(true);
+                }
                 playersContainer.getChildren().add(row);
                 inputs.add(pi);
             }
@@ -326,8 +336,18 @@ public class MatchesTabController {
                 PlayerInputs pi = new PlayerInputs();
                 pi.playerId = p.getId();
                 HBox row = new HBox(8);
-                row.getChildren().addAll(new Label(p.getUsername()), new Label("Kills:"), pi.kills,
-                        new Label("Deaths:"), pi.deaths, new Label("Assists:"), pi.assists);
+                String statusIndicator = p.isAvailable() ? "✓" : "✗ UNAVAILABLE";
+                row.getChildren().addAll(
+                        new Label(p.getUsername() + " [" + statusIndicator + "]"), 
+                        new Label("Kills:"), pi.kills,
+                        new Label("Deaths:"), pi.deaths, 
+                        new Label("Assists:"), pi.assists);
+                if (!p.isAvailable()) {
+                    row.setStyle("-fx-opacity: 0.6;");
+                    pi.kills.setDisable(true);
+                    pi.deaths.setDisable(true);
+                    pi.assists.setDisable(true);
+                }
                 playersContainer.getChildren().add(row);
                 inputs.add(pi);
             }
