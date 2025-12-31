@@ -12,9 +12,6 @@ import com.esports.arena.model.Player;
 import com.esports.arena.model.Team;
 import com.esports.arena.model.Tournament;
 
-/**
- * Utility class to generate sample data for testing and demonstration
- */
 public class SampleDataGenerator {
 
     private final TeamDAO teamDAO;
@@ -48,11 +45,8 @@ public class SampleDataGenerator {
         this.random = new Random();
     }
 
-    /**
-     * Generate complete sample dataset
-     */
     public void generateSampleData() {
-        System.out.println("🎮 Starting Sample Data Generation...\n");
+        System.out.println("Starting Sample Data Generation...\n");
 
         try {
             // Generate organizers first
@@ -72,7 +66,7 @@ public class SampleDataGenerator {
                 int playerCount = generatePlayersForTeam(teamId, 5);
                 totalPlayers += playerCount;
             }
-            System.out.println("✓ Created " + totalPlayers + " players\n");
+            System.out.println("Created " + totalPlayers + " players\n");
 
             // Set team leaders through voting
             System.out.println("Setting up team leaders...");
@@ -81,9 +75,9 @@ public class SampleDataGenerator {
             }
             System.out.println("✓ Team leaders established\n");
 
-            System.out.println("✅ Sample Data Generation Complete!");
+            System.out.println("Sample Data Generation Complete!");
             System.out.println("You can now use the application with pre-populated data.\n");
-            System.out.println("📝 Default Organizer Credentials:");
+            System.out.println("Default Organizer Credentials:");
             System.out.println("   Username: admin");
             System.out.println("   Password: admin123\n");
 
@@ -94,9 +88,6 @@ public class SampleDataGenerator {
         }
     }
 
-    /**
-     * Generate sample organizers
-     */
     private void generateOrganizers() {
         // Check if organizers already exist to avoid duplicates
         if (!organizerDAO.getAllOrganizers().isEmpty()) {
@@ -107,13 +98,10 @@ public class SampleDataGenerator {
         // Create default organizer
         Organizer organizer = new Organizer("admin", "admin123", "admin@esports-arena.com", "Administrator");
         if (organizerDAO.createOrganizer(organizer)) {
-            System.out.println("  ✓ Created organizer: " + organizer.getUsername());
+            System.out.println("Created organizer: " + organizer.getUsername());
         }
     }
 
-    /**
-     * Generate sample teams
-     */
     private int[] generateTeams(int count) {
         int[] teamIds = new int[count];
 
@@ -136,9 +124,7 @@ public class SampleDataGenerator {
         return teamIds;
     }
 
-    /**
-     * Generate players for a specific team
-     */
+
     private int generatePlayersForTeam(int teamId, int playerCount) {
         int created = 0;
 
@@ -178,9 +164,6 @@ public class SampleDataGenerator {
         return created;
     }
 
-    /**
-     * Setup team leader through simulated voting
-     */
     private void setupTeamLeader(int teamId) {
         try {
             LeaderVoteDAO voteDAO = new LeaderVoteDAO();
@@ -217,9 +200,7 @@ public class SampleDataGenerator {
         }
     }
 
-    /**
-     * Generate random real name
-     */
+
     private String generateRealName() {
         String[] firstNames = {"John", "Jane", "Michael", "Emily", "David", "Sarah",
                 "James", "Lisa", "Robert", "Maria"};
@@ -255,22 +236,13 @@ public class SampleDataGenerator {
         }
     }
 
-    /**
-     * Clean shutdown
-     */
     private void shutdown() {
         teamDAO.shutdown();
         playerDAO.shutdown();
     }
 
-    /**
-     * Main method to run data generation
-     */
     public static void main(String[] args) {
-        System.out.println("╔═══════════════════════════════════════════╗");
-        System.out.println("║   eSports Arena - Sample Data Generator  ║");
-        System.out.println("╚═══════════════════════════════════════════╝\n");
-
+        System.out.println("Sample Data Generator Application");
         SampleDataGenerator generator = new SampleDataGenerator();
         generator.generateSampleData();
 
