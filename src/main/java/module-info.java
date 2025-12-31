@@ -3,9 +3,8 @@ module com.esports.arena.esportsarena {
     requires javafx.controls;
     requires javafx.fxml;
 
-    // Database
-    requires java.sql;
-    requires org.xerial.sqlitejdbc;
+    // HTTP/Firebase
+    requires java.net.http;
     
 
     // JSON processing
@@ -22,6 +21,5 @@ module com.esports.arena.esportsarena {
     exports com.esports.arena.tabs;
     exports com.esports.arena.model;
     exports com.esports.arena.dao;
-    exports com.esports.arena.database;
     exports com.esports.arena.service;
 }

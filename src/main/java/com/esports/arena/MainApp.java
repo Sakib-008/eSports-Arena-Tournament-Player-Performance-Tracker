@@ -2,7 +2,6 @@ package com.esports.arena;
 
 import java.io.IOException;
 
-import com.esports.arena.database.DatabaseManager;
 import com.esports.arena.model.Player;
 
 import javafx.application.Application;
@@ -154,7 +153,6 @@ public class MainApp extends Application {
 
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                DatabaseManager.getInstance().close();
                 primaryStage.close();
                 System.exit(0);
             }

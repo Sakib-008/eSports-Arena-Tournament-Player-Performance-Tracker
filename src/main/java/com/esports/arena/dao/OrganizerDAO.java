@@ -1,125 +1,98 @@
 package com.esports.arena.dao;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
-import com.esports.arena.database.DatabaseManager;
 import com.esports.arena.model.Organizer;
+import com.esports.arena.service.RealtimeDatabaseService;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 public class OrganizerDAO {
-    private final DatabaseManager dbManager;
+    private static final String COLLECTION = "organizers";
+
     private final ExecutorService executor;
 
     public OrganizerDAO() {
-        this.dbManager = DatabaseManager.getInstance();
         this.executor = Executors.newFixedThreadPool(2);
     }
 
     public Organizer getOrganizerByUsername(String username) {
-        String query = "SELECT * FROM organizers WHERE username = ?";
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(query)) {
-            pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return mapResultSetToOrganizer(rs);
-            }
-        } catch (SQLException e) {
-            System.err.println("Error fetching organizer by username: " + e.getMessage());
-        }
-        return null;
+        return getAllOrganizers().stream()
+                .filter(o -> o.getUsername() != null && o.getUsername().equalsIgnoreCase(username))
+                .findFirst()
+                .orElse(null);
     }
 
     public Organizer getOrganizerById(int id) {
-        String query = "SELECT * FROM organizers WHERE id = ?";
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(query)) {
-            pstmt.setInt(1, id);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return mapResultSetToOrganizer(rs);
-            }
-        } catch (SQLException e) {
+        try {
+            return RealtimeDatabaseService.read(path(id), Organizer.class);
+        } catch (Exception e) {
             System.err.println("Error fetching organizer by id: " + e.getMessage());
+            return null;
         }
-        return null;
     }
 
     public List<Organizer> getAllOrganizers() {
-        List<Organizer> organizers = new ArrayList<>();
-        String query = "SELECT * FROM organizers";
-        try (Statement stmt = dbManager.getConnection().createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-            while (rs.next()) {
-                organizers.add(mapResultSetToOrganizer(rs));
+        try {
+            Map<String, Organizer> map = RealtimeDatabaseService.read(COLLECTION,
+                    new TypeReference<Map<String, Organizer>>() {});
+            if (map == null) {
+                return new ArrayList<>();
             }
-        } catch (SQLException e) {
+            return map.values().stream()
+                    .sorted(Comparator.comparing(Organizer::getUsername, Comparator.nullsLast(String::compareToIgnoreCase)))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
             System.err.println("Error fetching all organizers: " + e.getMessage());
+            return new ArrayList<>();
         }
-        return organizers;
     }
 
     public boolean createOrganizer(Organizer organizer) {
-        String query = "INSERT INTO organizers (username, password, email, full_name, created_date) VALUES (?, ?, ?, ?, ?)";
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-            pstmt.setString(1, organizer.getUsername());
-            pstmt.setString(2, organizer.getPassword());
-            pstmt.setString(3, organizer.getEmail());
-            pstmt.setString(4, organizer.getFullName());
-            pstmt.setString(5, LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-
-            int affectedRows = pstmt.executeUpdate();
-            if (affectedRows > 0) {
-                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        organizer.setId(generatedKeys.getInt(1));
-                        return true;
-                    }
-                }
-            }
-        } catch (SQLException e) {
+        try {
+            long nextId = RealtimeDatabaseService.nextId("counters/organizers");
+            int id = Math.toIntExact(nextId);
+            organizer.setId(id);
+            organizer.setCreatedDate(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            RealtimeDatabaseService.write(path(id), organizer);
+            return true;
+        } catch (Exception e) {
             System.err.println("Error creating organizer: " + e.getMessage());
+            return false;
         }
-        return false;
     }
 
     public boolean updateOrganizer(Organizer organizer) {
-        String query = "UPDATE organizers SET username = ?, password = ?, email = ?, full_name = ? WHERE id = ?";
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(query)) {
-            pstmt.setString(1, organizer.getUsername());
-            pstmt.setString(2, organizer.getPassword());
-            pstmt.setString(3, organizer.getEmail());
-            pstmt.setString(4, organizer.getFullName());
-            pstmt.setInt(5, organizer.getId());
-
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        try {
+            RealtimeDatabaseService.write(path(organizer.getId()), organizer);
+            return true;
+        } catch (Exception e) {
             System.err.println("Error updating organizer: " + e.getMessage());
+            return false;
         }
-        return false;
     }
 
     public boolean deleteOrganizer(int id) {
-        String query = "DELETE FROM organizers WHERE id = ?";
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(query)) {
-            pstmt.setInt(1, id);
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        try {
+            RealtimeDatabaseService.delete(path(id));
+            return true;
+        } catch (Exception e) {
             System.err.println("Error deleting organizer: " + e.getMessage());
+            return false;
         }
-        return false;
     }
 
     public Organizer authenticateOrganizer(String username, String password) {
         Organizer organizer = getOrganizerByUsername(username);
-        if (organizer != null && organizer.getPassword().equals(password)) {
+        if (organizer != null && organizer.getPassword() != null && organizer.getPassword().equals(password)) {
             return organizer;
         }
         return null;
@@ -129,15 +102,7 @@ public class OrganizerDAO {
         return CompletableFuture.supplyAsync(() -> authenticateOrganizer(username, password), executor);
     }
 
-    // Helper method to map ResultSet to Organizer
-    private Organizer mapResultSetToOrganizer(ResultSet rs) throws SQLException {
-        Organizer organizer = new Organizer();
-        organizer.setId(rs.getInt("id"));
-        organizer.setUsername(rs.getString("username"));
-        organizer.setPassword(rs.getString("password"));
-        organizer.setEmail(rs.getString("email"));
-        organizer.setFullName(rs.getString("full_name"));
-        organizer.setCreatedDate(rs.getString("created_date"));
-        return organizer;
+    private String path(int id) {
+        return COLLECTION + "/" + id;
     }
 }

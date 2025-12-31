@@ -1,26 +1,25 @@
 package com.esports.arena.dao;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
-import com.esports.arena.database.DatabaseManager;
 import com.esports.arena.model.Player;
+import com.esports.arena.service.RealtimeDatabaseService;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 public class PlayerDAO {
-    private final DatabaseManager dbManager;
+    private static final String COLLECTION = "players";
+
     private final ExecutorService executor;
 
     public PlayerDAO() {
-        this.dbManager = DatabaseManager.getInstance();
         this.executor = Executors.newFixedThreadPool(4);
     }
 
@@ -29,45 +28,19 @@ public class PlayerDAO {
     }
 
     public int createPlayer(Player player) {
-        String sql = """
-            INSERT INTO players (username, password, real_name, email, team_id, role, join_date, 
-                                available, availability_reason)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """;
-
-        dbManager.getLock().writeLock().lock();
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql,
-                Statement.RETURN_GENERATED_KEYS)) {
-
-            pstmt.setString(1, player.getUsername());
-            pstmt.setString(2, player.getPassword());
-            pstmt.setString(3, player.getRealName());
-            pstmt.setString(4, player.getEmail());
-            if (player.getTeamId() != null) {
-                pstmt.setInt(5, player.getTeamId());
-            } else {
-                pstmt.setNull(5, Types.INTEGER);
+        try {
+            long nextId = RealtimeDatabaseService.nextId("counters/players");
+            int id = Math.toIntExact(nextId);
+            player.setId(id);
+            if (player.getJoinDate() == null) {
+                player.setJoinDate(LocalDate.now());
             }
-            pstmt.setString(6, player.getRole());
-            pstmt.setString(7, player.getJoinDate().toString());
-            pstmt.setInt(8, player.isAvailable() ? 1 : 0);
-            pstmt.setString(9, player.getAvailabilityReason());
-
-            pstmt.executeUpdate();
-
-            try (ResultSet rs = pstmt.getGeneratedKeys()) {
-                if (rs.next()) {
-                    int id = rs.getInt(1);
-                    player.setId(id);
-                    return id;
-                }
-            }
-        } catch (SQLException e) {
+            RealtimeDatabaseService.write(path(id), player);
+            return id;
+        } catch (Exception e) {
             System.err.println("Error creating player: " + e.getMessage());
-        } finally {
-            dbManager.getLock().writeLock().unlock();
+            return -1;
         }
-        return -1;
     }
 
     public CompletableFuture<Player> getPlayerByIdAsync(int id) {
@@ -75,41 +48,19 @@ public class PlayerDAO {
     }
 
     public Player getPlayerById(int id) {
-        String sql = "SELECT * FROM players WHERE id = ?";
-
-        dbManager.getLock().readLock().lock();
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
-            pstmt.setInt(1, id);
-            ResultSet rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                return extractPlayer(rs);
-            }
-        } catch (SQLException e) {
+        try {
+            return RealtimeDatabaseService.read(path(id), Player.class);
+        } catch (Exception e) {
             System.err.println("Error getting player: " + e.getMessage());
-        } finally {
-            dbManager.getLock().readLock().unlock();
+            return null;
         }
-        return null;
     }
 
     public Player getPlayerByUsername(String username) {
-        String sql = "SELECT * FROM players WHERE username = ?";
-
-        dbManager.getLock().readLock().lock();
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
-            pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                return extractPlayer(rs);
-            }
-        } catch (SQLException e) {
-            System.err.println("Error getting player by username: " + e.getMessage());
-        } finally {
-            dbManager.getLock().readLock().unlock();
-        }
-        return null;
+        return getAllPlayers().stream()
+                .filter(p -> p.getUsername() != null && p.getUsername().equalsIgnoreCase(username))
+                .findFirst()
+                .orElse(null);
     }
 
     public CompletableFuture<List<Player>> getAllPlayersAsync() {
@@ -117,22 +68,19 @@ public class PlayerDAO {
     }
 
     public List<Player> getAllPlayers() {
-        List<Player> players = new ArrayList<>();
-        String sql = "SELECT * FROM players ORDER BY username";
-
-        dbManager.getLock().readLock().lock();
-        try (Statement stmt = dbManager.getConnection().createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                players.add(extractPlayer(rs));
+        try {
+            Map<String, Player> map = RealtimeDatabaseService.read(COLLECTION,
+                    new TypeReference<Map<String, Player>>() {});
+            if (map == null) {
+                return new ArrayList<>();
             }
-        } catch (SQLException e) {
+            return map.values().stream()
+                    .sorted(Comparator.comparing(Player::getUsername, Comparator.nullsLast(String::compareToIgnoreCase)))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
             System.err.println("Error getting all players: " + e.getMessage());
-        } finally {
-            dbManager.getLock().readLock().unlock();
+            return new ArrayList<>();
         }
-        return players;
     }
 
     public CompletableFuture<List<Player>> getPlayersByTeamAsync(int teamId) {
@@ -140,43 +88,16 @@ public class PlayerDAO {
     }
 
     public List<Player> getPlayersByTeam(int teamId) {
-        List<Player> players = new ArrayList<>();
-        String sql = "SELECT * FROM players WHERE team_id = ? ORDER BY username";
-
-        dbManager.getLock().readLock().lock();
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
-            pstmt.setInt(1, teamId);
-            ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                players.add(extractPlayer(rs));
-            }
-        } catch (SQLException e) {
-            System.err.println("Error getting players by team: " + e.getMessage());
-        } finally {
-            dbManager.getLock().readLock().unlock();
-        }
-        return players;
+        return getAllPlayers().stream()
+                .filter(p -> p.getTeamId() != null && p.getTeamId() == teamId)
+                .sorted(Comparator.comparing(Player::getUsername, Comparator.nullsLast(String::compareToIgnoreCase)))
+                .collect(Collectors.toList());
     }
 
     public List<Player> getAvailablePlayersByTeam(int teamId) {
-        List<Player> players = new ArrayList<>();
-        String sql = "SELECT * FROM players WHERE team_id = ? AND available = 1 ORDER BY username";
-
-        dbManager.getLock().readLock().lock();
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
-            pstmt.setInt(1, teamId);
-            ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                players.add(extractPlayer(rs));
-            }
-        } catch (SQLException e) {
-            System.err.println("Error getting available players: " + e.getMessage());
-        } finally {
-            dbManager.getLock().readLock().unlock();
-        }
-        return players;
+        return getPlayersByTeam(teamId).stream()
+                .filter(Player::isAvailable)
+                .collect(Collectors.toList());
     }
 
     public CompletableFuture<Boolean> updatePlayerAsync(Player player) {
@@ -184,133 +105,54 @@ public class PlayerDAO {
     }
 
     public boolean updatePlayer(Player player) {
-        String sql = """
-            UPDATE players SET username = ?, real_name = ?, email = ?, team_id = ?, 
-                              role = ?, available = ?, availability_reason = ?,
-                              total_kills = ?, total_deaths = ?, total_assists = ?,
-                              matches_played = ?, matches_won = ?
-            WHERE id = ?
-        """;
-
-        dbManager.getLock().writeLock().lock();
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
-            pstmt.setString(1, player.getUsername());
-            pstmt.setString(2, player.getRealName());
-            pstmt.setString(3, player.getEmail());
-            if (player.getTeamId() != null) {
-                pstmt.setInt(4, player.getTeamId());
-            } else {
-                pstmt.setNull(4, Types.INTEGER);
-            }
-            pstmt.setString(5, player.getRole());
-            pstmt.setInt(6, player.isAvailable() ? 1 : 0);
-            pstmt.setString(7, player.getAvailabilityReason());
-            pstmt.setInt(8, player.getTotalKills());
-            pstmt.setInt(9, player.getTotalDeaths());
-            pstmt.setInt(10, player.getTotalAssists());
-            pstmt.setInt(11, player.getMatchesPlayed());
-            pstmt.setInt(12, player.getMatchesWon());
-            pstmt.setInt(13, player.getId());
-
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        try {
+            RealtimeDatabaseService.write(path(player.getId()), player);
+            return true;
+        } catch (Exception e) {
             System.err.println("Error updating player: " + e.getMessage());
-        } finally {
-            dbManager.getLock().writeLock().unlock();
+            return false;
         }
-        return false;
     }
 
-    public boolean updatePlayerStats(int playerId, int kills, int deaths, int assists,
-                                     boolean won) {
-        String sql = """
-            UPDATE players 
-            SET total_kills = total_kills + ?, 
-                total_deaths = total_deaths + ?,
-                total_assists = total_assists + ?,
-                matches_played = matches_played + 1,
-                matches_won = matches_won + ?
-            WHERE id = ?
-        """;
-
-        dbManager.getLock().writeLock().lock();
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
-            pstmt.setInt(1, kills);
-            pstmt.setInt(2, deaths);
-            pstmt.setInt(3, assists);
-            pstmt.setInt(4, won ? 1 : 0);
-            pstmt.setInt(5, playerId);
-
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.err.println("Error updating player stats: " + e.getMessage());
-        } finally {
-            dbManager.getLock().writeLock().unlock();
+    public boolean updatePlayerStats(int playerId, int kills, int deaths, int assists, boolean won) {
+        Player player = getPlayerById(playerId);
+        if (player == null) {
+            return false;
         }
-        return false;
+        player.setTotalKills(player.getTotalKills() + kills);
+        player.setTotalDeaths(player.getTotalDeaths() + deaths);
+        player.setTotalAssists(player.getTotalAssists() + assists);
+        player.setMatchesPlayed(player.getMatchesPlayed() + 1);
+        player.setMatchesWon(player.getMatchesWon() + (won ? 1 : 0));
+        return updatePlayer(player);
     }
 
-    public CompletableFuture<Boolean> updateAvailabilityAsync(int playerId, boolean available,
-                                                              String reason) {
-        return CompletableFuture.supplyAsync(() ->
-                updateAvailability(playerId, available, reason), executor);
+    public CompletableFuture<Boolean> updateAvailabilityAsync(int playerId, boolean available, String reason) {
+        return CompletableFuture.supplyAsync(() -> updateAvailability(playerId, available, reason), executor);
     }
 
     public boolean updateAvailability(int playerId, boolean available, String reason) {
-        String sql = "UPDATE players SET available = ?, availability_reason = ? WHERE id = ?";
-
-        dbManager.getLock().writeLock().lock();
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
-            pstmt.setInt(1, available ? 1 : 0);
-            pstmt.setString(2, reason);
-            pstmt.setInt(3, playerId);
-
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.err.println("Error updating availability: " + e.getMessage());
-        } finally {
-            dbManager.getLock().writeLock().unlock();
+        Player player = getPlayerById(playerId);
+        if (player == null) {
+            return false;
         }
-        return false;
+        player.setAvailable(available);
+        player.setAvailabilityReason(reason);
+        return updatePlayer(player);
     }
 
     public boolean deletePlayer(int id) {
-        String sql = "DELETE FROM players WHERE id = ?";
-
-        dbManager.getLock().writeLock().lock();
-        try (PreparedStatement pstmt = dbManager.getConnection().prepareStatement(sql)) {
-            pstmt.setInt(1, id);
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        try {
+            RealtimeDatabaseService.delete(path(id));
+            return true;
+        } catch (Exception e) {
             System.err.println("Error deleting player: " + e.getMessage());
-        } finally {
-            dbManager.getLock().writeLock().unlock();
+            return false;
         }
-        return false;
     }
 
-    private Player extractPlayer(ResultSet rs) throws SQLException {
-        Player player = new Player();
-        player.setId(rs.getInt("id"));
-        player.setUsername(rs.getString("username"));
-        player.setPassword(rs.getString("password"));
-        player.setRealName(rs.getString("real_name"));
-        player.setEmail(rs.getString("email"));
-
-        int teamId = rs.getInt("team_id");
-        player.setTeamId(rs.wasNull() ? null : teamId);
-
-        player.setRole(rs.getString("role"));
-        player.setJoinDate(LocalDate.parse(rs.getString("join_date")));
-        player.setTotalKills(rs.getInt("total_kills"));
-        player.setTotalDeaths(rs.getInt("total_deaths"));
-        player.setTotalAssists(rs.getInt("total_assists"));
-        player.setMatchesPlayed(rs.getInt("matches_played"));
-        player.setMatchesWon(rs.getInt("matches_won"));
-        player.setAvailable(rs.getInt("available") == 1);
-        player.setAvailabilityReason(rs.getString("availability_reason"));
-
-        return player;
+    private String path(int id) {
+        return COLLECTION + "/" + id;
     }
 
     public void shutdown() {
