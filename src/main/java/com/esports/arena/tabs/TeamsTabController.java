@@ -90,6 +90,14 @@ public class TeamsTabController {
         new Thread(loadTeamsTask).start();
     }
 
+    public void updateTeamsList() {
+        // Real-time update method for background refresh
+        List<Team> teams = teamDAO.getAllTeams();
+        if (teams != null) {
+            teamsData.setAll(teams);
+        }
+    }
+
     @FXML
     private void handleAddTeam() {
         TextInputDialog dialog = new TextInputDialog();

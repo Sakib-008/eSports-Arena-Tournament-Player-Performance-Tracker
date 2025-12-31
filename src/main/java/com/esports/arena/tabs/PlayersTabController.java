@@ -95,6 +95,14 @@ public class PlayersTabController {
         new Thread(loadPlayersTask).start();
     }
 
+    public void updatePlayersList() {
+        // Real-time update method for background refresh
+        List<Player> players = playerDAO.getAllPlayers();
+        if (players != null) {
+            playersData.setAll(players);
+        }
+    }
+
     @FXML
     private void handleEditPlayer() {
         Player selected = playersTable.getSelectionModel().getSelectedItem();

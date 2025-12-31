@@ -67,8 +67,30 @@ public class OrganizerDashboardController {
         matchDAO = new MatchDAO();
         jsonService = new JsonExportImportService();
         teamsData = FXCollections.observableArrayList();
+        
         initializeTabControllers();
         loadAllData();
+    }
+
+    @FXML
+    private void handleRefresh() {
+        loadAllData();
+        
+        if (teamsTabController != null) {
+            teamsTabController.updateTeamsList();
+        }
+        if (playersTabController != null) {
+            playersTabController.updatePlayersList();
+        }
+        if (tournamentsTabController != null) {
+            tournamentsTabController.updateTournamentsList();
+        }
+        if (matchesTabController != null) {
+            matchesTabController.updateMatchesList();
+        }
+        if (leaderboardTabController != null) {
+            leaderboardTabController.updateLeaderboard();
+        }
     }
 
     private void initializeTabControllers() {

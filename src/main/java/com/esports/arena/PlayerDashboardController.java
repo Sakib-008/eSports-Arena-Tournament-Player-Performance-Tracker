@@ -5,6 +5,7 @@ import com.esports.arena.dao.PlayerDAO;
 import com.esports.arena.dao.TeamDAO;
 import com.esports.arena.dao.TournamentDAO;
 import com.esports.arena.model.Player;
+import com.esports.arena.service.DataRefreshService;
 import com.esports.arena.tabs.LeaderboardTabController;
 import com.esports.arena.tabs.PlayerProfileTabController;
 import com.esports.arena.tabs.PlayerStatsTabController;
@@ -77,8 +78,18 @@ public class PlayerDashboardController {
         
         }if (votingTabController != null) {
             votingTabController.setCurrentPlayer(player);
+        }
+    }
     
-        }}
+    @FXML
+    private void handleRefresh() {
+        if (currentPlayer != null) {
+            Player refreshedPlayer = playerDAO.getPlayerById(currentPlayer.getId());
+            if (refreshedPlayer != null) {
+                setCurrentPlayer(refreshedPlayer);
+            }
+        }
+    }
 
     @FXML
     private void initialize() {
@@ -86,6 +97,9 @@ public class PlayerDashboardController {
         teamDAO = new TeamDAO();
         tournamentDAO = new TournamentDAO();
         voteDAO = new LeaderVoteDAO();
+
+        // Start real-time refresh service
+        DataRefreshService.start();
 
         initializeTabControllers();
     }

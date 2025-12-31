@@ -95,6 +95,14 @@ public class TournamentsTabController {
         new Thread(loadTournamentsTask).start();
     }
 
+    public void updateTournamentsList() {
+        // Real-time update method for background refresh
+        List<Tournament> tournaments = tournamentDAO.getAllTournaments();
+        if (tournaments != null) {
+            tournamentsData.setAll(tournaments);
+        }
+    }
+
     private void updateTournamentDetails(Tournament tournament) {
         if (tournament != null) {
             tournamentNameLabel.setText(tournament.getName());

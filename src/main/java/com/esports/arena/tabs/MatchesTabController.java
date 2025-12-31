@@ -146,6 +146,14 @@ public class MatchesTabController {
         new Thread(task).start();
     }
 
+    public void updateMatchesList() {
+        // Real-time update method for background refresh
+        List<Match> matches = matchDAO.getAllMatches();
+        if (matches != null) {
+            matchesData.setAll(matches);
+        }
+    }
+
     @FXML
     private void handleViewMatchDetails() {
         Match selected = matchesTable.getSelectionModel().getSelectedItem();

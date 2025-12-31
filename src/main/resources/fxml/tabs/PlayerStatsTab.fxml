@@ -87,16 +87,35 @@
             </VBox>
 
             <VBox spacing="10" styleClass="card">
-                <Label text="Performance Chart" styleClass="card-title"/>
+                <Label text="Player Performance Visualization" styleClass="card-title"/>
                 <Separator/>
-                <BarChart fx:id="performanceChart" legendVisible="false" prefHeight="260" maxHeight="320">
-                    <xAxis>
-                        <CategoryAxis fx:id="xAxis" label="Metrics"/>
-                    </xAxis>
-                    <yAxis>
-                        <NumberAxis fx:id="yAxis" label="Count"/>
-                    </yAxis>
-                </BarChart>
+                <VBox spacing="15">
+                    <VBox spacing="5">
+                        <Label text="Overall Career Statistics - All Tournaments Combined" style="-fx-font-weight: bold; -fx-font-size: 13; -fx-text-fill: #2c3e50;"/>
+                        <Label text="Shows total: Kills, Deaths, Assists, and Wins across all career matches" style="-fx-font-size: 11; -fx-text-fill: #555555;"/>
+                        <BarChart fx:id="performanceChart" legendVisible="true" prefHeight="300" animated="false">
+                            <xAxis>
+                                <CategoryAxis fx:id="xAxis" label="Statistics" style="-fx-tick-label-font-size: 12;"/>
+                            </xAxis>
+                            <yAxis>
+                                <NumberAxis fx:id="yAxis" label="Count" autoRanging="true" style="-fx-tick-label-font-size: 12;"/>
+                            </yAxis>
+                        </BarChart>
+                    </VBox>
+                    <Separator/>
+                    <VBox spacing="5">
+                        <Label fx:id="tournamentChartLabel" text="Tournament Specific Statistics - Select a tournament above to view" style="-fx-font-weight: bold; -fx-font-size: 13; -fx-text-fill: #2c3e50;"/>
+                        <Label text="Shows Kills, Deaths, Assists, and Wins for the selected tournament only" style="-fx-font-size: 11; -fx-text-fill: #555555;"/>
+                        <BarChart fx:id="tournamentStatsChart" legendVisible="true" prefHeight="300" animated="false">
+                            <xAxis>
+                                <CategoryAxis fx:id="tournamentChartXAxis" label="Statistics" style="-fx-tick-label-font-size: 12;"/>
+                            </xAxis>
+                            <yAxis>
+                                <NumberAxis fx:id="tournamentChartYAxis" label="Count" autoRanging="true" style="-fx-tick-label-font-size: 12;"/>
+                            </yAxis>
+                        </BarChart>
+                    </VBox>
+                </VBox>
             </VBox>
 
         </VBox>

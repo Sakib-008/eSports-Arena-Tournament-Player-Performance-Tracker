@@ -13,6 +13,7 @@
             <Label text="Organizer Dashboard" styleClass="dashboard-title"/>
             <HBox spacing="10" alignment="CENTER_LEFT">
                 <padding><Insets top="10"/></padding>
+                <Button text="🔄 Refresh" onAction="#handleRefresh" styleClass="header-button"/>
                 <Button fx:id="exportDataBtn" text="Export Data"
                         onAction="#handleExportData" styleClass="header-button"/>
                 <Button fx:id="importDataBtn" text="Import Data"

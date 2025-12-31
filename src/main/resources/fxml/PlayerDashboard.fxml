@@ -15,6 +15,7 @@
             <HBox spacing="15" alignment="CENTER_LEFT">
                 <padding><Insets top="10"/></padding>
                 <Region HBox.hgrow="ALWAYS"/>
+                <Button text="🔄 Refresh" onAction="#handleRefresh" styleClass="header-button"/>
                 <Button fx:id="backToMenuBtn" text="Back to Menu"
                         onAction="#handleBackToMenu" styleClass="header-button"/>
             </HBox>
