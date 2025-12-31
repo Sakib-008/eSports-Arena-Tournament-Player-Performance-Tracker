@@ -1,5 +1,8 @@
 package com.esports.arena.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Organizer {
     private int id;
     private String username;

@@ -1,12 +1,14 @@
 package com.esports.arena.util;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Random;
 
 import com.esports.arena.dao.LeaderVoteDAO;
 import com.esports.arena.dao.OrganizerDAO;
 import com.esports.arena.dao.PlayerDAO;
 import com.esports.arena.dao.TeamDAO;
+import com.esports.arena.dao.TournamentDAO;
 import com.esports.arena.model.Organizer;
 import com.esports.arena.model.Player;
 import com.esports.arena.model.Team;
@@ -17,6 +19,7 @@ public class SampleDataGenerator {
     private final TeamDAO teamDAO;
     private final PlayerDAO playerDAO;
     private final OrganizerDAO organizerDAO;
+    private final TournamentDAO tournamentDAO;
     private final Random random;
 
     private static final String[] TEAM_NAMES = {
@@ -42,6 +45,7 @@ public class SampleDataGenerator {
         this.teamDAO = new TeamDAO();
         this.playerDAO = new PlayerDAO();
         this.organizerDAO = new OrganizerDAO();
+        this.tournamentDAO = new TournamentDAO();
         this.random = new Random();
     }
 
@@ -220,6 +224,8 @@ public class SampleDataGenerator {
         String[] games = {"League of Legends", "CS:GO", "Dota 2", "Valorant", "Overwatch"};
         String[] formats = {"Single Elimination", "Double Elimination", "Round Robin"};
 
+        List<Team> allTeams = teamDAO.getAllTeams();
+        
         for (int i = 0; i < 3; i++) {
             Tournament tournament = new Tournament(
                     games[i] + " Championship 2025",
@@ -232,13 +238,26 @@ public class SampleDataGenerator {
             );
 
             tournament.setStatus(Tournament.TournamentStatus.REGISTRATION_OPEN);
-            System.out.println("  • Created tournament: " + tournament.getName());
+            int tournamentId = tournamentDAO.createTournament(tournament);
+            
+            if (tournamentId > 0) {
+                System.out.println("  • Created tournament: " + tournament.getName());
+                
+                // Register some teams to the tournament
+                int teamsToRegister = Math.min(allTeams.size(), random.nextInt(5) + 3);
+                for (int j = 0; j < teamsToRegister; j++) {
+                    Team team = allTeams.get(j);
+                    tournamentDAO.registerTeam(tournamentId, team.getId());
+                    System.out.println("    ✓ Registered team: " + team.getName());
+                }
+            }
         }
     }
 
     private void shutdown() {
         teamDAO.shutdown();
         playerDAO.shutdown();
+        tournamentDAO.shutdown();
     }
 
     public static void main(String[] args) {

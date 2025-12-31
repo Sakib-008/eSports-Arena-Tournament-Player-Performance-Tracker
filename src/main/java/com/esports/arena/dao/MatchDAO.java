@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 import com.esports.arena.model.Match;
 import com.esports.arena.model.PlayerMatchStats;
 import com.esports.arena.service.RealtimeDatabaseService;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 public class MatchDAO {
     private static final String COLLECTION = "matches";
@@ -77,8 +76,7 @@ public class MatchDAO {
 
     public List<Match> getAllMatches() {
         try {
-            Map<String, Match> map = RealtimeDatabaseService.read(COLLECTION,
-                    new TypeReference<Map<String, Match>>() {});
+            Map<String, Match> map = RealtimeDatabaseService.readCollection(COLLECTION, Match.class);
             if (map == null) {
                 return new ArrayList<>();
             }

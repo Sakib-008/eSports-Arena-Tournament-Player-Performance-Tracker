@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 
 import com.esports.arena.model.Organizer;
 import com.esports.arena.service.RealtimeDatabaseService;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 public class OrganizerDAO {
     private static final String COLLECTION = "organizers";
@@ -42,8 +41,7 @@ public class OrganizerDAO {
 
     public List<Organizer> getAllOrganizers() {
         try {
-            Map<String, Organizer> map = RealtimeDatabaseService.read(COLLECTION,
-                    new TypeReference<Map<String, Organizer>>() {});
+            Map<String, Organizer> map = RealtimeDatabaseService.readCollection(COLLECTION, Organizer.class);
             if (map == null) {
                 return new ArrayList<>();
             }

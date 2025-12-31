@@ -6,9 +6,12 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.esports.arena.util.EnvLoader;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -49,6 +52,46 @@ public class RealtimeDatabaseService {
 
                 String body = CLIENT.send(request, HttpResponse.BodyHandlers.ofString()).body();
                 return MAPPER.readValue(body, type);
+        }
+
+        // Read collection that handles both Firebase array and object responses
+        public static <T> Map<String, T> readCollection(String path, Class<T> valueType) throws Exception {
+                HttpRequest request = HttpRequest.newBuilder()
+                                .uri(buildUri(path))
+                                .GET()
+                                .build();
+
+                String body = CLIENT.send(request, HttpResponse.BodyHandlers.ofString()).body();
+                
+                if (body == null || "null".equals(body.trim())) {
+                        return new HashMap<>();
+                }
+
+                JsonNode node = MAPPER.readTree(body);
+                Map<String, T> result = new HashMap<>();
+
+                if (node.isArray()) {
+                        // Firebase returned an array (numeric sequential keys)
+                        for (int i = 0; i < node.size(); i++) {
+                                JsonNode element = node.get(i);
+                                if (element != null && !element.isNull()) {
+                                        T value = MAPPER.treeToValue(element, valueType);
+                                        result.put(String.valueOf(i), value);
+                                }
+                        }
+                } else if (node.isObject()) {
+                        // Firebase returned an object (string keys)
+                        node.fields().forEachRemaining(entry -> {
+                                try {
+                                        T value = MAPPER.treeToValue(entry.getValue(), valueType);
+                                        result.put(entry.getKey(), value);
+                                } catch (Exception e) {
+                                        System.err.println("Error parsing entry: " + e.getMessage());
+                                }
+                        });
+                }
+
+                return result;
         }
 
         public static String readRaw(String path) throws Exception {

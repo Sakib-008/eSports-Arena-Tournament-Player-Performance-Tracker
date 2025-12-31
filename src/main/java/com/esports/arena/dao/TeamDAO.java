@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import com.esports.arena.model.Team;
 import com.esports.arena.service.RealtimeDatabaseService;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 public class TeamDAO {
     private static final String COLLECTION = "teams";
@@ -68,8 +67,7 @@ public class TeamDAO {
 
     public List<Team> getAllTeams() {
         try {
-            Map<String, Team> map = RealtimeDatabaseService.read(COLLECTION,
-                    new TypeReference<Map<String, Team>>() {});
+            Map<String, Team> map = RealtimeDatabaseService.readCollection(COLLECTION, Team.class);
             if (map == null) {
                 return new ArrayList<>();
             }

@@ -1,11 +1,14 @@
 package com.esports.arena.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Team {
     @JsonProperty("id")
     private int id;
@@ -105,12 +108,14 @@ public class Team {
                 .orElse(null);
     }
 
+    @JsonIgnore
     public List<Player> getAvailablePlayers() {
         return players.stream()
                 .filter(Player::isAvailable)
                 .toList();
     }
 
+    @JsonIgnore
     public int getAvailablePlayerCount() {
         return (int) players.stream()
                 .filter(Player::isAvailable)
