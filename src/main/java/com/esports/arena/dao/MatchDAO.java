@@ -144,6 +144,42 @@ public class MatchDAO {
         }
     }
 
+    public boolean updatePlayerStats(int matchId, int playerId, int kills, int deaths, int assists) {
+        Match match = getMatchById(matchId);
+        if (match == null) {
+            return false;
+        }
+
+        if (match.getPlayerStats() == null) {
+            match.setPlayerStats(new ArrayList<>());
+        }
+
+        PlayerMatchStats existing = match.getPlayerStats().stream()
+                .filter(ps -> ps.getPlayerId() == playerId)
+                .findFirst()
+                .orElse(null);
+
+        if (existing == null) {
+            try {
+                long nextId = RealtimeDatabaseService.nextId("counters/playerMatchStats");
+                existing = new PlayerMatchStats();
+                existing.setId(Math.toIntExact(nextId));
+                existing.setMatchId(matchId);
+                existing.setPlayerId(playerId);
+                match.getPlayerStats().add(existing);
+            } catch (Exception e) {
+                System.err.println("Error updating player stats: " + e.getMessage());
+                return false;
+            }
+        }
+
+        existing.setKills(kills);
+        existing.setDeaths(deaths);
+        existing.setAssists(assists);
+
+        return updateMatch(match);
+    }
+
     public List<PlayerMatchStats> getPlayerStatsByMatch(int matchId) {
         Match match = getMatchById(matchId);
         if (match == null || match.getPlayerStats() == null) {

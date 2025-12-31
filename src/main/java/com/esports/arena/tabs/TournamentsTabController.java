@@ -47,6 +47,7 @@ public class TournamentsTabController {
 
     private TournamentDAO tournamentDAO;
     private MatchDAO matchDAO;
+    private TeamDAO teamDAO;
     private ObservableList<Tournament> tournamentsData;
     private ObservableList<Team> teamsData;
     private MatchesTabController matchesTabController;
@@ -55,6 +56,7 @@ public class TournamentsTabController {
                           ObservableList<Team> teamsData, MatchesTabController matchesTabController) {
         this.tournamentDAO = tournamentDAO;
         this.matchDAO = matchDAO;
+        this.teamDAO = teamDAO;
         this.teamsData = teamsData;
         this.matchesTabController = matchesTabController;
         this.tournamentsData = FXCollections.observableArrayList();
@@ -134,7 +136,7 @@ public class TournamentsTabController {
                 Task<Team> loadWinnerTask = new Task<>() {
                     @Override
                     protected Team call() {
-                        return new com.esports.arena.dao.TeamDAO().getTeamById(tournament.getWinnerId());
+                        return teamDAO.getTeamById(tournament.getWinnerId());
                     }
                 };
                 
@@ -193,7 +195,7 @@ public class TournamentsTabController {
         TextField nameField = new TextField();
         nameField.setPromptText("Tournament Name");
         TextField gameField = new TextField();
-        gameField.setPromptText("Game (e.g., VALORANT)");
+        gameField.setPromptText("Game (e.g., VALORANT, CS:GO)");
         ComboBox<String> formatCombo = new ComboBox<>();
         formatCombo.getItems().addAll("Single Elimination", "Double Elimination", "Round Robin");
         formatCombo.setValue("Single Elimination");
@@ -352,207 +354,142 @@ public class TournamentsTabController {
             return;
         }
 
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Manage Tournament Teams: " + selected.getName());
-        dialog.setHeaderText("Add Teams and Generate Matches");
-
-        ButtonType addTeamsButtonType = new ButtonType("Add Selected Teams", ButtonBar.ButtonData.OTHER);
-        ButtonType generateMatchesButtonType = new ButtonType("Generate Matches", ButtonBar.ButtonData.OTHER);
-        dialog.getDialogPane().getButtonTypes().addAll(addTeamsButtonType, generateMatchesButtonType, ButtonType.CLOSE);
-
-        VBox content = new VBox(15);
-        
-        // Get already registered teams
-        List<Team> registeredTeams = tournamentDAO.getRegisteredTeams(selected.getId());
-        
-        // Section 1: Available teams to add
-        Label availableLabel = new Label("Available Teams (Select Multiple):");
-        availableLabel.setStyle("-fx-font-weight: bold;");
-        
-        ListView<Team> availableTeamsList = new ListView<>();
-        availableTeamsList.setPrefHeight(200);
-        
-        // Filter out already registered teams
-        ObservableList<Team> availableTeams = FXCollections.observableArrayList();
-        for (Team team : teamsData) {
-            boolean alreadyRegistered = registeredTeams.stream()
-                    .anyMatch(t -> t.getId() == team.getId());
-            if (!alreadyRegistered) {
-                availableTeams.add(team);
-            }
-        }
-        availableTeamsList.setItems(availableTeams);
-        availableTeamsList.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.MULTIPLE);
-        availableTeamsList.setCellFactory(param -> new ListCell<Team>() {
+        LoadingDialog.showLoading("Loading registered teams...");
+        Task<List<Team>> loadRegisteredTask = new Task<>() {
             @Override
-            protected void updateItem(Team item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getName() + " [" + item.getTag() + "]");
-                }
-            }
-        });
-
-        // Section 2: Registered teams
-        Label registeredLabel = new Label("Registered Teams: " + registeredTeams.size() + "/" + selected.getMaxTeams());
-        registeredLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #2e7d32;");
-        
-        ListView<Team> registeredList = new ListView<>();
-        registeredList.setPrefHeight(200);
-        registeredList.setItems(FXCollections.observableArrayList(registeredTeams));
-        registeredList.setCellFactory(param -> new ListCell<Team>() {
-            @Override
-            protected void updateItem(Team item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText("✓ " + item.getName() + " [" + item.getTag() + "]");
-                }
-            }
-        });
-
-        Label infoLabel = new Label("💡 Tip: Select multiple teams (Ctrl+Click) and click 'Add Selected Teams'.\nThen click 'Generate Matches' to create a tournament bracket automatically.");
-        infoLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #555; -fx-wrap-text: true;");
-        infoLabel.setWrapText(true);
-        infoLabel.setMaxWidth(480);
-
-        content.getChildren().addAll(
-            infoLabel,
-            new javafx.scene.control.Separator(),
-            availableLabel, 
-            availableTeamsList,
-            new javafx.scene.control.Separator(),
-            registeredLabel, 
-            registeredList
-        );
-        
-        dialog.getDialogPane().setContent(content);
-        dialog.getDialogPane().setPrefSize(520, 650);
-
-        // Handle button actions
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == addTeamsButtonType) {
-                List<Team> selectedTeams = availableTeamsList.getSelectionModel().getSelectedItems();
-                if (selectedTeams.isEmpty()) {
-                    MainApp.showError("No Selection", "Please select at least one team to add");
-                    return null;
-                }
-
-                if (registeredTeams.size() + selectedTeams.size() > selected.getMaxTeams()) {
-                    MainApp.showError("Limit Exceeded", 
-                        "Cannot add " + selectedTeams.size() + " teams. Tournament limit: " + selected.getMaxTeams() + 
-                        "\nCurrently registered: " + registeredTeams.size() +
-                        "\nAvailable slots: " + (selected.getMaxTeams() - registeredTeams.size()));
-                    return null;
-                }
-
-                Task<Integer> registerTask = new Task<>() {
-                    @Override
-                    protected Integer call() {
-                        int count = 0;
-                        for (Team team : selectedTeams) {
-                            if (tournamentDAO.registerTeam(selected.getId(), team.getId())) {
-                                count++;
-                            }
-                        }
-                        return count;
-                    }
-                };
-
-                registerTask.setOnSucceeded(e -> {
-                    int count = registerTask.getValue();
-                    MainApp.showInfo("Success", "Successfully registered " + count + " team(s) to the tournament!");
-                    loadTournaments();
-                    // Re-open dialog to continue management
-                    javafx.application.Platform.runLater(() -> handleManageTeams());
-                });
-
-                registerTask.setOnFailed(e -> MainApp.showError("Error", "Failed to register teams"));
-                new Thread(registerTask).start();
-                
-            } else if (dialogButton == generateMatchesButtonType) {
-                if (registeredTeams.size() < 2) {
-                    MainApp.showError("Not Enough Teams", "Need at least 2 teams to generate matches.\nCurrently registered: " + registeredTeams.size());
-                    return null;
-                }
-
-                Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-                confirmAlert.setTitle("Generate Matches");
-                confirmAlert.setHeaderText("Generate tournament bracket?");
-                confirmAlert.setContentText(
-                    "This will create " + (registeredTeams.size() / 2) + " match(es) for the first round.\n" +
-                    "Format: " + selected.getFormat() + "\n" +
-                    "Teams: " + registeredTeams.size() + "\n\n" +
-                    "Continue?"
-                );
-
-                confirmAlert.showAndWait().ifPresent(response -> {
-                    if (response == ButtonType.OK) {
-                        generateTournamentMatches(selected, registeredTeams);
-                    }
-                });
-            }
-            return null;
-        });
-
-        dialog.showAndWait();
-    }
-
-    private void generateTournamentMatches(Tournament tournament, List<Team> teams) {
-        Task<Integer> generateTask = new Task<>() {
-            @Override
-            protected Integer call() {
-                int matchesCreated = 0;
-                java.time.LocalDateTime startTime = java.time.LocalDateTime.now().plusDays(1).withHour(14).withMinute(0);
-                
-                // Shuffle teams for random pairings
-                java.util.ArrayList<Team> shuffledTeams = new java.util.ArrayList<>(teams);
-                java.util.Collections.shuffle(shuffledTeams);
-                
-                // Create first round matches
-                for (int i = 0; i < shuffledTeams.size() - 1; i += 2) {
-                    if (i + 1 < shuffledTeams.size()) {
-                        Team team1 = shuffledTeams.get(i);
-                        Team team2 = shuffledTeams.get(i + 1);
-                        
-                        Match match = new Match(
-                            tournament.getId(),
-                            team1.getId(),
-                            team2.getId(),
-                            startTime.plusHours(i * 2), // Stagger matches by 2 hours
-                            "Round 1 - Match " + (matchesCreated + 1)
-                        );
-                        match.setStatus(Match.MatchStatus.SCHEDULED);
-                        
-                        if (matchDAO.createMatch(match) > 0) {
-                            matchesCreated++;
-                        }
-                    }
-                }
-                
-                return matchesCreated;
+            protected List<Team> call() {
+                return tournamentDAO.getRegisteredTeams(selected.getId());
             }
         };
 
-        generateTask.setOnSucceeded(e -> {
-            int count = generateTask.getValue();
-            MainApp.showInfo("Success", 
-                "Generated " + count + " match(es) for Round 1!\n\n" +
-                "All teams have been paired.\n" +
-                "You can view and manage matches in the Matches tab.");
-            
-            if (matchesTabController != null) {
-                matchesTabController.loadMatchesForTournament(tournament.getId());
+        loadRegisteredTask.setOnSucceeded(evt -> {
+            LoadingDialog.hideLoading();
+            List<Team> registeredTeams = loadRegisteredTask.getValue();
+
+            Dialog<Void> dialog = new Dialog<>();
+            dialog.setTitle("Manage Tournament Teams: " + selected.getName());
+            dialog.setHeaderText("Add Teams");
+
+            ButtonType addTeamsButtonType = new ButtonType("Add Selected Teams", ButtonBar.ButtonData.OTHER);
+            dialog.getDialogPane().getButtonTypes().addAll(addTeamsButtonType, ButtonType.CLOSE);
+
+            VBox content = new VBox(15);
+
+            Label availableLabel = new Label("Available Teams (Select Multiple):");
+            availableLabel.setStyle("-fx-font-weight: bold;");
+
+            ListView<Team> availableTeamsList = new ListView<>();
+            availableTeamsList.setPrefHeight(200);
+
+            ObservableList<Team> availableTeams = FXCollections.observableArrayList();
+            for (Team team : teamsData) {
+                boolean alreadyRegistered = registeredTeams.stream().anyMatch(t -> t.getId() == team.getId());
+                if (!alreadyRegistered) {
+                    availableTeams.add(team);
+                }
             }
+            availableTeamsList.setItems(availableTeams);
+            availableTeamsList.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.MULTIPLE);
+            availableTeamsList.setCellFactory(param -> new ListCell<Team>() {
+                @Override
+                protected void updateItem(Team item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(item.getName() + " [" + item.getTag() + "]");
+                    }
+                }
+            });
+
+            Label registeredLabel = new Label("Registered Teams: " + registeredTeams.size() + "/" + selected.getMaxTeams());
+            registeredLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #2e7d32;");
+
+            ListView<Team> registeredList = new ListView<>();
+            registeredList.setPrefHeight(200);
+            registeredList.setItems(FXCollections.observableArrayList(registeredTeams));
+            registeredList.setCellFactory(param -> new ListCell<Team>() {
+                @Override
+                protected void updateItem(Team item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText("Registered: " + item.getName() + " [" + item.getTag() + "]");
+                    }
+                }
+            });
+
+            Label infoLabel = new Label("Tip: Select multiple teams (Ctrl+Click) and click 'Add Selected Teams'.\nThen create matches manually using the 'Create Match' button in the tournament actions.");
+            infoLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #555; -fx-wrap-text: true;");
+            infoLabel.setWrapText(true);
+            infoLabel.setMaxWidth(480);
+
+            content.getChildren().addAll(
+                infoLabel,
+                new javafx.scene.control.Separator(),
+                availableLabel,
+                availableTeamsList,
+                new javafx.scene.control.Separator(),
+                registeredLabel,
+                registeredList
+            );
+
+            dialog.getDialogPane().setContent(content);
+            dialog.getDialogPane().setPrefSize(520, 650);
+
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == addTeamsButtonType) {
+                    List<Team> selectedTeams = availableTeamsList.getSelectionModel().getSelectedItems();
+                    if (selectedTeams.isEmpty()) {
+                        MainApp.showError("No Selection", "Please select at least one team to add");
+                        return null;
+                    }
+
+                    if (registeredTeams.size() + selectedTeams.size() > selected.getMaxTeams()) {
+                        MainApp.showError("Limit Exceeded",
+                            "Cannot add " + selectedTeams.size() + " teams. Tournament limit: " + selected.getMaxTeams() +
+                            "\nCurrently registered: " + registeredTeams.size() +
+                            "\nAvailable slots: " + (selected.getMaxTeams() - registeredTeams.size()));
+                        return null;
+                    }
+
+                    Task<Integer> registerTask = new Task<>() {
+                        @Override
+                        protected Integer call() {
+                            int count = 0;
+                            for (Team team : selectedTeams) {
+                                if (tournamentDAO.registerTeam(selected.getId(), team.getId())) {
+                                    count++;
+                                }
+                            }
+                            return count;
+                        }
+                    };
+
+                    registerTask.setOnSucceeded(e -> {
+                        int count = registerTask.getValue();
+                        MainApp.showInfo("Success", "Successfully registered " + count + " team(s) to the tournament!");
+                        loadTournaments();
+                        javafx.application.Platform.runLater(() -> handleManageTeams());
+                    });
+
+                    registerTask.setOnFailed(e -> MainApp.showError("Error", "Failed to register teams"));
+                    new Thread(registerTask).start();
+
+                }
+                return null;
+            });
+
+            dialog.showAndWait();
         });
 
-        generateTask.setOnFailed(e -> 
-            MainApp.showError("Error", "Failed to generate matches: " + generateTask.getException().getMessage()));
+        loadRegisteredTask.setOnFailed(evt -> {
+            LoadingDialog.hideLoading();
+            MainApp.showError("Error", "Failed to load registered teams: " + evt.getSource().getException().getMessage());
+        });
 
-        new Thread(generateTask).start();
+        new Thread(loadRegisteredTask).start();
     }
 
     @FXML

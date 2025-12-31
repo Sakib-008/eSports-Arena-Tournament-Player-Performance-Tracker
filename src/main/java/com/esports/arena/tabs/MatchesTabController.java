@@ -50,6 +50,10 @@ public class MatchesTabController {
     private ObservableList<Match> matchesData;
     private ObservableList<Team> teamsData;
 
+    private record MatchDetailData(Match match, Team team1, Team team2,
+                                   List<Player> playersTeam1, List<Player> playersTeam2,
+                                   List<com.esports.arena.model.PlayerMatchStats> stats) { }
+
     public void initialize(MatchDAO matchDAO, TeamDAO teamDAO, PlayerDAO playerDAO, ObservableList<Team> teamsData) {
         this.matchDAO = matchDAO;
         this.teamDAO = teamDAO;
@@ -197,10 +201,12 @@ public class MatchesTabController {
 
         new Thread(task).start();
     }
-    
+
     @FXML
     private void handleShowAllMatches() {
-        tournamentFilterCombo.setValue(null);
+        if (tournamentFilterCombo != null) {
+            tournamentFilterCombo.setValue(null);
+        }
         loadAllMatches();
     }
 
@@ -261,96 +267,111 @@ public class MatchesTabController {
             return;
         }
 
-        Match match = matchDAO.getMatchById(selected.getId());
-        if (match == null) {
-            MainApp.showError("Error", "Failed to load match details");
-            return;
-        }
-
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Match Details - " + match.getId());
-        dialog.setHeaderText("View Match Details and Player Stats");
-
-        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
-
-        VBox content = new VBox(12);
-        content.setPrefWidth(700);
-
-        Team team1 = teamDAO.getTeamById(match.getTeam1Id());
-        Team team2 = teamDAO.getTeamById(match.getTeam2Id());
-
-        Label teamsLabel = new Label((team1 != null ? team1.getName() : "Team 1") + " vs " + (team2 != null ? team2.getName() : "Team 2"));
-        teamsLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
-
-        HBox scoreBox = new HBox(10);
-        Label team1ScoreLabel = new Label("Score: " + match.getTeam1Score() + " - " + match.getTeam2Score());
-        team1ScoreLabel.setStyle("-fx-font-size: 12px;");
-        Label statusLabel = new Label("Status: " + match.getStatus().toString());
-        statusLabel.setStyle("-fx-font-size: 12px;");
-
-        scoreBox.getChildren().addAll(team1ScoreLabel, statusLabel);
-
-        content.getChildren().addAll(teamsLabel, scoreBox, new Separator());
-
-        List<Player> playersTeam1 = playerDAO.getPlayersByTeam(match.getTeam1Id());
-        List<Player> playersTeam2 = playerDAO.getPlayersByTeam(match.getTeam2Id());
-
-        VBox playersContainer = new VBox(10);
-
-        List<com.esports.arena.model.PlayerMatchStats> allStats = matchDAO.getPlayerStatsByMatch(match.getId());
-
-        if (!playersTeam1.isEmpty()) {
-            playersContainer.getChildren().add(new Label("" + (team1 != null ? team1.getName() : "Team 1") + " Players"));
-            for (Player p : playersTeam1) {
-                com.esports.arena.model.PlayerMatchStats pStats = allStats.stream()
-                        .filter(s -> s.getPlayerId() == p.getId())
-                        .findFirst().orElse(null);
-                
-                int kills = pStats != null ? pStats.getKills() : 0;
-                int deaths = pStats != null ? pStats.getDeaths() : 0;
-                int assists = pStats != null ? pStats.getAssists() : 0;
-                
-                HBox row = new HBox(8);
-                row.getChildren().addAll(
-                    new Label(p.getUsername()),
-                    new Label("K: " + kills),
-                    new Label("D: " + deaths),
-                    new Label("A: " + assists)
-                );
-                playersContainer.getChildren().add(row);
+        LoadingDialog.showLoading("Loading match details...");
+        Task<MatchDetailData> loadTask = new Task<>() {
+            @Override
+            protected MatchDetailData call() {
+                Match match = matchDAO.getMatchById(selected.getId());
+                if (match == null) {
+                    throw new IllegalStateException("Match not found");
+                }
+                Team team1 = teamDAO.getTeamById(match.getTeam1Id());
+                Team team2 = teamDAO.getTeamById(match.getTeam2Id());
+                List<Player> playersTeam1 = playerDAO.getPlayersByTeam(match.getTeam1Id());
+                List<Player> playersTeam2 = playerDAO.getPlayersByTeam(match.getTeam2Id());
+                List<com.esports.arena.model.PlayerMatchStats> stats = matchDAO.getPlayerStatsByMatch(match.getId());
+                return new MatchDetailData(match, team1, team2, playersTeam1, playersTeam2, stats);
             }
-        }
+        };
 
-        if (!playersTeam2.isEmpty()) {
-            playersContainer.getChildren().add(new Label("" + (team2 != null ? team2.getName() : "Team 2") + " Players"));
-            for (Player p : playersTeam2) {
-                com.esports.arena.model.PlayerMatchStats pStats = allStats.stream()
-                        .filter(s -> s.getPlayerId() == p.getId())
-                        .findFirst().orElse(null);
-                
-                int kills = pStats != null ? pStats.getKills() : 0;
-                int deaths = pStats != null ? pStats.getDeaths() : 0;
-                int assists = pStats != null ? pStats.getAssists() : 0;
-                
-                HBox row = new HBox(8);
-                row.getChildren().addAll(
-                    new Label(p.getUsername()),
-                    new Label("K: " + kills),
-                    new Label("D: " + deaths),
-                    new Label("A: " + assists)
-                );
-                playersContainer.getChildren().add(row);
+        loadTask.setOnSucceeded(evt -> {
+            LoadingDialog.hideLoading();
+            MatchDetailData data = loadTask.getValue();
+
+            Dialog<Void> dialog = new Dialog<>();
+            dialog.setTitle("Match Details - " + data.match().getId());
+            dialog.setHeaderText("View Match Details and Player Stats");
+
+            dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+            VBox content = new VBox(12);
+            content.setPrefWidth(700);
+
+            Label teamsLabel = new Label((data.team1() != null ? data.team1().getName() : "Team 1") + " vs " + (data.team2() != null ? data.team2().getName() : "Team 2"));
+            teamsLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+
+            HBox scoreBox = new HBox(10);
+            Label team1ScoreLabel = new Label("Score: " + data.match().getTeam1Score() + " - " + data.match().getTeam2Score());
+            team1ScoreLabel.setStyle("-fx-font-size: 12px;");
+            Label statusLabel = new Label("Status: " + data.match().getStatus().toString());
+            statusLabel.setStyle("-fx-font-size: 12px;");
+
+            scoreBox.getChildren().addAll(team1ScoreLabel, statusLabel);
+
+            content.getChildren().addAll(teamsLabel, scoreBox, new Separator());
+
+            VBox playersContainer = new VBox(10);
+
+            if (!data.playersTeam1().isEmpty()) {
+                playersContainer.getChildren().add(new Label((data.team1() != null ? data.team1().getName() : "Team 1") + " Players"));
+                for (Player p : data.playersTeam1()) {
+                    com.esports.arena.model.PlayerMatchStats pStats = data.stats().stream()
+                            .filter(s -> s.getPlayerId() == p.getId())
+                            .findFirst().orElse(null);
+
+                    int kills = pStats != null ? pStats.getKills() : 0;
+                    int deaths = pStats != null ? pStats.getDeaths() : 0;
+                    int assists = pStats != null ? pStats.getAssists() : 0;
+
+                    HBox row = new HBox(8);
+                    row.getChildren().addAll(
+                        new Label(p.getUsername()),
+                        new Label("K: " + kills),
+                        new Label("D: " + deaths),
+                        new Label("A: " + assists)
+                    );
+                    playersContainer.getChildren().add(row);
+                }
             }
-        }
 
-        ScrollPane scroll = new ScrollPane(playersContainer);
-        scroll.setFitToWidth(true);
-        scroll.setPrefHeight(300);
+            if (!data.playersTeam2().isEmpty()) {
+                playersContainer.getChildren().add(new Label((data.team2() != null ? data.team2().getName() : "Team 2") + " Players"));
+                for (Player p : data.playersTeam2()) {
+                    com.esports.arena.model.PlayerMatchStats pStats = data.stats().stream()
+                            .filter(s -> s.getPlayerId() == p.getId())
+                            .findFirst().orElse(null);
 
-        content.getChildren().add(scroll);
+                    int kills = pStats != null ? pStats.getKills() : 0;
+                    int deaths = pStats != null ? pStats.getDeaths() : 0;
+                    int assists = pStats != null ? pStats.getAssists() : 0;
 
-        dialog.getDialogPane().setContent(content);
-        dialog.showAndWait();
+                    HBox row = new HBox(8);
+                    row.getChildren().addAll(
+                        new Label(p.getUsername()),
+                        new Label("K: " + kills),
+                        new Label("D: " + deaths),
+                        new Label("A: " + assists)
+                    );
+                    playersContainer.getChildren().add(row);
+                }
+            }
+
+            ScrollPane scroll = new ScrollPane(playersContainer);
+            scroll.setFitToWidth(true);
+            scroll.setPrefHeight(450);
+
+            content.getChildren().add(scroll);
+
+            dialog.getDialogPane().setContent(content);
+            dialog.showAndWait();
+        });
+
+        loadTask.setOnFailed(evt -> {
+            LoadingDialog.hideLoading();
+            MainApp.showError("Error", "Failed to load match details: " + evt.getSource().getException().getMessage());
+        });
+
+        new Thread(loadTask).start();
     }
 
     @FXML
@@ -361,226 +382,187 @@ public class MatchesTabController {
             return;
         }
 
-        Match match = matchDAO.getMatchById(selected.getId());
-        if (match == null) {
-            MainApp.showError("Error", "Failed to load match details");
-            return;
-        }
-
-        // Prevent editing completed matches
-        if (match.getStatus() == Match.MatchStatus.COMPLETED) {
-            MainApp.showError("Match Completed", "Cannot edit statistics for matches that are already completed");
-            return;
-        }
-
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Match Details - " + match.getId());
-        dialog.setHeaderText("Match Details and Player Stats");
-
-        ButtonType finalizeButtonType = new ButtonType("Finalize Match", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(finalizeButtonType, ButtonType.CLOSE);
-
-        VBox content = new VBox(12);
-        content.setPrefWidth(700);
-
-        Team team1 = teamDAO.getTeamById(match.getTeam1Id());
-        Team team2 = teamDAO.getTeamById(match.getTeam2Id());
-
-        Label teamsLabel = new Label((team1 != null ? team1.getName() : "Team 1") + " vs " + (team2 != null ? team2.getName() : "Team 2"));
-        teamsLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
-
-        HBox scoreBox = new HBox(10);
-        TextField team1ScoreField = new TextField(String.valueOf(match.getTeam1Score()));
-        team1ScoreField.setPrefWidth(80);
-        TextField team2ScoreField = new TextField(String.valueOf(match.getTeam2Score()));
-        team2ScoreField.setPrefWidth(80);
-
-        scoreBox.getChildren().addAll(new Label(team1 != null ? team1.getName() : "Team 1"), team1ScoreField,
-                new Label("-"), team2ScoreField, new Label(team2 != null ? team2.getName() : "Team 2"));
-
-        content.getChildren().addAll(teamsLabel, scoreBox, new Separator());
-
-        List<Player> playersTeam1 = playerDAO.getPlayersByTeam(match.getTeam1Id());
-        List<Player> playersTeam2 = playerDAO.getPlayersByTeam(match.getTeam2Id());
-
-        VBox playersContainer = new VBox(10);
-
-        class PlayerInputs {
-            int playerId;
-            TextField kills = new TextField("0");
-            TextField deaths = new TextField("0");
-            TextField assists = new TextField("0");
-        }
-
-        List<PlayerInputs> inputs = new java.util.ArrayList<>();
-
-        if (!playersTeam1.isEmpty()) {
-            playersContainer.getChildren().add(new Label("" + (team1 != null ? team1.getName() : "Team 1") + " Players"));
-            for (Player p : playersTeam1) {
-                PlayerInputs pi = new PlayerInputs();
-                pi.playerId = p.getId();
-                HBox row = new HBox(8);
-                String statusIndicator = p.isAvailable() ? "✓" : "✗ UNAVAILABLE";
-                row.getChildren().addAll(
-                        new Label(p.getUsername() + " [" + statusIndicator + "]"), 
-                        new Label("Kills:"), pi.kills,
-                        new Label("Deaths:"), pi.deaths, 
-                        new Label("Assists:"), pi.assists);
-                if (!p.isAvailable()) {
-                    row.setStyle("-fx-opacity: 0.6;");
-                    pi.kills.setDisable(true);
-                    pi.deaths.setDisable(true);
-                    pi.assists.setDisable(true);
+        LoadingDialog.showLoading("Loading match...");
+        Task<MatchDetailData> loadTask = new Task<>() {
+            @Override
+            protected MatchDetailData call() {
+                Match match = matchDAO.getMatchById(selected.getId());
+                if (match == null) {
+                    throw new IllegalStateException("Match not found");
                 }
-                playersContainer.getChildren().add(row);
-                inputs.add(pi);
+                Team team1 = teamDAO.getTeamById(match.getTeam1Id());
+                Team team2 = teamDAO.getTeamById(match.getTeam2Id());
+                List<Player> playersTeam1 = playerDAO.getPlayersByTeam(match.getTeam1Id());
+                List<Player> playersTeam2 = playerDAO.getPlayersByTeam(match.getTeam2Id());
+                return new MatchDetailData(match, team1, team2, playersTeam1, playersTeam2, java.util.Collections.emptyList());
             }
-        }
+        };
 
-        if (!playersTeam2.isEmpty()) {
-            playersContainer.getChildren().add(new Label("" + (team2 != null ? team2.getName() : "Team 2") + " Players"));
-            for (Player p : playersTeam2) {
-                PlayerInputs pi = new PlayerInputs();
-                pi.playerId = p.getId();
-                HBox row = new HBox(8);
-                String statusIndicator = p.isAvailable() ? "✓" : "✗ UNAVAILABLE";
-                row.getChildren().addAll(
-                        new Label(p.getUsername() + " [" + statusIndicator + "]"), 
-                        new Label("Kills:"), pi.kills,
-                        new Label("Deaths:"), pi.deaths, 
-                        new Label("Assists:"), pi.assists);
-                if (!p.isAvailable()) {
-                    row.setStyle("-fx-opacity: 0.6;");
-                    pi.kills.setDisable(true);
-                    pi.deaths.setDisable(true);
-                    pi.assists.setDisable(true);
-                }
-                playersContainer.getChildren().add(row);
-                inputs.add(pi);
+        loadTask.setOnSucceeded(evt -> {
+            LoadingDialog.hideLoading();
+            MatchDetailData data = loadTask.getValue();
+
+            if (data.match().getStatus() == Match.MatchStatus.COMPLETED) {
+                MainApp.showError("Match Completed", "Cannot edit statistics for matches that are already completed");
+                return;
             }
-        }
 
-        ScrollPane scroll = new ScrollPane(playersContainer);
-        scroll.setFitToWidth(true);
-        scroll.setPrefHeight(300);
+            Dialog<Void> dialog = new Dialog<>();
+            dialog.setTitle("Match Details - " + data.match().getId());
+            dialog.setHeaderText("Match Details and Player Stats");
+            dialog.getDialogPane().setPrefSize(900, 700);
+            dialog.getDialogPane().setMinSize(800, 600);
 
-        content.getChildren().add(scroll);
+            ButtonType finalizeButtonType = new ButtonType("Finalize Match", ButtonBar.ButtonData.OK_DONE);
+            dialog.getDialogPane().getButtonTypes().addAll(finalizeButtonType, ButtonType.CLOSE);
 
-        dialog.getDialogPane().setContent(content);
+            VBox content = new VBox(12);
+            content.setPrefWidth(850);
 
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == finalizeButtonType) {
-                int s1 = 0, s2 = 0;
-                try {
-                    s1 = Integer.parseInt(team1ScoreField.getText().trim());
-                    s2 = Integer.parseInt(team2ScoreField.getText().trim());
-                } catch (NumberFormatException e) {
-                    MainApp.showError("Invalid Input", "Please enter valid integer scores");
-                    return null;
+            Label teamsLabel = new Label((data.team1() != null ? data.team1().getName() : "Team 1") + " vs " + (data.team2() != null ? data.team2().getName() : "Team 2"));
+            teamsLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+
+            HBox scoreBox = new HBox(10);
+            TextField team1ScoreField = new TextField(String.valueOf(data.match().getTeam1Score()));
+            team1ScoreField.setPrefWidth(80);
+            TextField team2ScoreField = new TextField(String.valueOf(data.match().getTeam2Score()));
+            team2ScoreField.setPrefWidth(80);
+
+            scoreBox.getChildren().addAll(new Label(data.team1() != null ? data.team1().getName() : "Team 1"), team1ScoreField,
+                    new Label("-"), team2ScoreField, new Label(data.team2() != null ? data.team2().getName() : "Team 2"));
+
+            content.getChildren().addAll(teamsLabel, scoreBox, new Separator());
+
+            List<Player> playersTeam1 = data.playersTeam1();
+            List<Player> playersTeam2 = data.playersTeam2();
+
+            VBox playersContainer = new VBox(10);
+
+            class PlayerInputs {
+                int playerId;
+                TextField kills = new TextField("0");
+                TextField deaths = new TextField("0");
+                TextField assists = new TextField("0");
+            }
+
+            List<PlayerInputs> inputs = new java.util.ArrayList<>();
+
+            if (!playersTeam1.isEmpty()) {
+                playersContainer.getChildren().add(new Label((data.team1() != null ? data.team1().getName() : "Team 1") + " Players"));
+                for (Player p : playersTeam1) {
+                    PlayerInputs pi = new PlayerInputs();
+                    pi.playerId = p.getId();
+                    HBox row = new HBox(8);
+                    String statusIndicator = p.isAvailable() ? "AVAILABLE" : "UNAVAILABLE";
+                    row.getChildren().addAll(
+                            new Label(p.getUsername() + " [" + statusIndicator + "]"), 
+                            new Label("Kills:"), pi.kills,
+                            new Label("Deaths:"), pi.deaths, 
+                            new Label("Assists:"), pi.assists);
+                    if (!p.isAvailable()) {
+                        row.setStyle("-fx-opacity: 0.6;");
+                        pi.kills.setDisable(true);
+                        pi.deaths.setDisable(true);
+                        pi.assists.setDisable(true);
+                    }
+                    playersContainer.getChildren().add(row);
+                    inputs.add(pi);
                 }
+            }
 
-                int finalS1 = s1, finalS2 = s2;
+            if (!playersTeam2.isEmpty()) {
+                playersContainer.getChildren().add(new Label((data.team2() != null ? data.team2().getName() : "Team 2") + " Players"));
+                for (Player p : playersTeam2) {
+                    PlayerInputs pi = new PlayerInputs();
+                    pi.playerId = p.getId();
+                    HBox row = new HBox(8);
+                    String statusIndicator = p.isAvailable() ? "AVAILABLE" : "UNAVAILABLE";
+                    row.getChildren().addAll(
+                            new Label(p.getUsername() + " [" + statusIndicator + "]"), 
+                            new Label("Kills:"), pi.kills,
+                            new Label("Deaths:"), pi.deaths, 
+                            new Label("Assists:"), pi.assists);
+                    if (!p.isAvailable()) {
+                        row.setStyle("-fx-opacity: 0.6;");
+                        pi.kills.setDisable(true);
+                        pi.deaths.setDisable(true);
+                        pi.assists.setDisable(true);
+                    }
+                    playersContainer.getChildren().add(row);
+                    inputs.add(pi);
+                }
+            }
 
-                Task<Void> task = new Task<>() {
-                    @Override
-                    protected Void call() {
-                        match.setTeam1Score(finalS1);
-                        match.setTeam2Score(finalS2);
-                        if (match.getActualStartTime() == null) {
-                            match.setActualStartTime(java.time.LocalDateTime.now());
-                        }
-                        match.setActualEndTime(java.time.LocalDateTime.now());
+            ScrollPane scroll = new ScrollPane(playersContainer);
+            scroll.setFitToWidth(true);
+            scroll.setPrefHeight(300);
 
-                        Integer winnerId = null;
-                        if (finalS1 > finalS2) {
-                            winnerId = match.getTeam1Id();
-                        } else if (finalS2 > finalS1) {
-                            winnerId = match.getTeam2Id();
-                        }
-                        match.setWinnerId(winnerId);
+            content.getChildren().add(scroll);
+
+            dialog.getDialogPane().setContent(content);
+
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == finalizeButtonType) {
+                    try {
+                        int team1Score = Integer.parseInt(team1ScoreField.getText());
+                        int team2Score = Integer.parseInt(team2ScoreField.getText());
+
+                        Match match = data.match();
+                        Match.MatchStatus previousStatus = match.getStatus();
+                        Integer previousWinner = match.getWinnerId();
+
+                        match.setTeam1Score(team1Score);
+                        match.setTeam2Score(team2Score);
                         match.setStatus(Match.MatchStatus.COMPLETED);
 
-                        matchDAO.updateMatch(match);
-
-                        if (winnerId == null) {
-                            teamDAO.updateTeamRecord(match.getTeam1Id(), false, true);
-                            teamDAO.updateTeamRecord(match.getTeam2Id(), false, true);
-                        } else if (winnerId.equals(match.getTeam1Id())) {
-                            teamDAO.updateTeamRecord(match.getTeam1Id(), true, false);
-                            teamDAO.updateTeamRecord(match.getTeam2Id(), false, false);
-                        } else {
-                            teamDAO.updateTeamRecord(match.getTeam2Id(), true, false);
-                            teamDAO.updateTeamRecord(match.getTeam1Id(), false, false);
+                        boolean winnerDecided = team1Score != team2Score;
+                        if (!winnerDecided) {
+                            MainApp.showError("Invalid Score", "Scores cannot be tied for a completed match");
+                            return null;
                         }
+
+                        int winningTeamId = team1Score > team2Score ? match.getTeam1Id() : match.getTeam2Id();
+                        int losingTeamId = winningTeamId == match.getTeam1Id() ? match.getTeam2Id() : match.getTeam1Id();
+                        match.setWinnerId(winningTeamId);
+                        boolean shouldUpdateTeamRecords = previousStatus != Match.MatchStatus.COMPLETED || previousWinner == null;
 
                         for (PlayerInputs pi : inputs) {
-                            int kills = 0, deaths = 0, assists = 0;
-                            try {
-                                kills = Integer.parseInt(pi.kills.getText().trim());
-                                deaths = Integer.parseInt(pi.deaths.getText().trim());
-                                assists = Integer.parseInt(pi.assists.getText().trim());
-                            } catch (NumberFormatException ignored) {
+                            int kills = Integer.parseInt(pi.kills.getText());
+                            int deaths = Integer.parseInt(pi.deaths.getText());
+                            int assists = Integer.parseInt(pi.assists.getText());
+                            matchDAO.updatePlayerStats(match.getId(), pi.playerId, kills, deaths, assists);
+
+                            boolean onWinningTeam = (winningTeamId == match.getTeam1Id() && playersTeam1.stream().anyMatch(p -> p.getId() == pi.playerId))
+                                    || (winningTeamId == match.getTeam2Id() && playersTeam2.stream().anyMatch(p -> p.getId() == pi.playerId));
+                            if (shouldUpdateTeamRecords) { // reuse flag to avoid double-counting player totals on re-finalize
+                                playerDAO.updatePlayerStats(pi.playerId, kills, deaths, assists, onWinningTeam);
                             }
-
-                            // Adding player stats here
-                            com.esports.arena.model.PlayerMatchStats stats = new com.esports.arena.model.PlayerMatchStats();
-                            stats.setMatchId(match.getId());
-                            stats.setPlayerId(pi.playerId);
-                            stats.setKills(kills);
-                            stats.setDeaths(deaths);
-                            stats.setAssists(assists);
-
-                            boolean playerWon = false;
-                            com.esports.arena.model.Player p = playerDAO.getPlayerById(pi.playerId);
-                            if (p != null && p.getTeamId() != null && winnerId != null) {
-                                playerWon = p.getTeamId().equals(winnerId);
-                            }
-
-                            matchDAO.addPlayerStats(stats);
-                            playerDAO.updatePlayerStats(pi.playerId, kills, deaths, assists, playerWon);
                         }
 
-                        return null;
+                        if (shouldUpdateTeamRecords) {
+                            teamDAO.updateTeamRecord(winningTeamId, true, false);
+                            teamDAO.updateTeamRecord(losingTeamId, false, false);
+                        }
+
+                        matchDAO.updateMatch(match);
+                        loadMatchesForTournament(match.getTournamentId());
+                        MainApp.showInfo("Success", "Match finalized and stats saved");
+                    } catch (NumberFormatException ex) {
+                        MainApp.showError("Invalid Input", "Please enter valid numeric scores and stats");
                     }
-                };
+                }
+                return null;
+            });
 
-                task.setOnSucceeded(e -> {
-                    MainApp.showInfo("Success", "Match finalized and stats recorded");
-                    // Real-time update: fetch the updated match and refresh it in the table immediately
-                    Task<Match> refreshTask = new Task<>() {
-                        @Override
-                        protected Match call() {
-                            return matchDAO.getMatchById(match.getId());
-                        }
-                    };
-                    
-                    refreshTask.setOnSucceeded(refreshEvent -> {
-                        Match updatedMatch = refreshTask.getValue();
-                        if (updatedMatch != null) {
-                            // Find and replace the match in the observable list
-                            for (int i = 0; i < matchesData.size(); i++) {
-                                if (matchesData.get(i).getId() == updatedMatch.getId()) {
-                                    matchesData.set(i, updatedMatch);
-                                    break;
-                                }
-                            }
-                        }
-                    });
-                    
-                    new Thread(refreshTask).start();
-                });
-
-                task.setOnFailed(e -> {
-                    MainApp.showError("Error", "Failed to finalize match: " + task.getException().getMessage());
-                });
-
-                new Thread(task).start();
-
-            }
-            return null;
+            dialog.showAndWait();
         });
 
-        dialog.showAndWait();
+        loadTask.setOnFailed(evt -> {
+            LoadingDialog.hideLoading();
+            MainApp.showError("Error", "Failed to load match: " + evt.getSource().getException().getMessage());
+        });
+
+        new Thread(loadTask).start();
     }
 
     public void refreshMatchesData() {
