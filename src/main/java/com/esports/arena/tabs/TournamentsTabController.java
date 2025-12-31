@@ -264,6 +264,9 @@ public class TournamentsTabController {
             if (saveTask.getValue() > 0) {
                 MainApp.showInfo("Success", "Tournament created successfully!");
                 loadTournaments();
+                if (matchesTabController != null) {
+                    matchesTabController.refreshTournamentFilter();
+                }
             } else {
                 MainApp.showError("Error", "Failed to create tournament");
             }

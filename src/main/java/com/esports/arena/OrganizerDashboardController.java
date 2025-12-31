@@ -172,10 +172,13 @@ public class OrganizerDashboardController {
             if (leaderboardTabController != null) {
                 leaderboardTabController.updateLeaderboard();
             }
+            LoadingDialog.hideLoading();
         });
 
-        loadTeamsTask.setOnFailed(e ->
-                MainApp.showError("Error", "Failed to load teams"));
+        loadTeamsTask.setOnFailed(e -> {
+            MainApp.showError("Error", "Failed to load teams");
+            LoadingDialog.hideLoading();
+        });
 
         new Thread(loadTeamsTask).start();
     }

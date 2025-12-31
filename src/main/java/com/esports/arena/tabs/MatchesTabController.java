@@ -59,14 +59,12 @@ public class MatchesTabController {
         this.matchesData = FXCollections.observableArrayList();
         setupMatchesTable();
         setupTournamentFilter();
+        refreshTournamentFilter();
         loadAllMatches();
     }
 
     private void setupTournamentFilter() {
         if (tournamentFilterCombo != null) {
-            List<com.esports.arena.model.Tournament> tournaments = tournamentDAO.getAllTournaments();
-            tournamentFilterCombo.setItems(FXCollections.observableArrayList(tournaments));
-            
             tournamentFilterCombo.setCellFactory(param -> new ListCell<com.esports.arena.model.Tournament>() {
                 @Override
                 protected void updateItem(com.esports.arena.model.Tournament item, boolean empty) {
@@ -74,7 +72,7 @@ public class MatchesTabController {
                     setText(empty || item == null ? null : item.getName() + " (" + item.getStatus() + ")");
                 }
             });
-            
+
             tournamentFilterCombo.setButtonCell(new ListCell<com.esports.arena.model.Tournament>() {
                 @Override
                 protected void updateItem(com.esports.arena.model.Tournament item, boolean empty) {
@@ -82,7 +80,7 @@ public class MatchesTabController {
                     setText(empty || item == null ? "All Tournaments" : item.getName());
                 }
             });
-            
+
             tournamentFilterCombo.setOnAction(e -> {
                 com.esports.arena.model.Tournament selected = tournamentFilterCombo.getValue();
                 if (selected != null) {
@@ -92,27 +90,58 @@ public class MatchesTabController {
         }
     }
 
+    public void refreshTournamentFilter() {
+        if (tournamentFilterCombo == null) {
+            return;
+        }
+
+        Task<List<com.esports.arena.model.Tournament>> task = new Task<>() {
+            @Override
+            protected List<com.esports.arena.model.Tournament> call() {
+                return tournamentDAO.getAllTournaments();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            List<com.esports.arena.model.Tournament> tournaments = task.getValue();
+            com.esports.arena.model.Tournament previouslySelected = tournamentFilterCombo.getValue();
+            tournamentFilterCombo.setItems(FXCollections.observableArrayList(tournaments));
+            if (previouslySelected != null) {
+                tournamentFilterCombo.getItems().stream()
+                        .filter(t -> t.getId() == previouslySelected.getId())
+                        .findFirst()
+                        .ifPresent(tournamentFilterCombo::setValue);
+            }
+        });
+
+        task.setOnFailed(e -> MainApp.showError("Error", "Failed to load tournaments for filter: " + task.getException().getMessage()));
+
+        new Thread(task).start();
+    }
+
     private void setupMatchesTable() {
         matchIdCol.setCellValueFactory(new PropertyValueFactory<>("id"));
 
         matchTeam1Col.setCellValueFactory(cellData -> {
             Match match = cellData.getValue();
-            if (match != null) {
-                Team team1 = teamDAO.getTeamById(match.getTeam1Id());
-                return javafx.beans.binding.Bindings.createStringBinding(
-                        () -> team1 != null ? team1.getName() : "Team " + match.getTeam1Id());
-            }
-            return javafx.beans.binding.Bindings.createStringBinding(() -> "Unknown");
+            return javafx.beans.binding.Bindings.createStringBinding(() -> {
+                if (match == null) {
+                    return "Unknown";
+                }
+                Team team = findTeamInCache(match.getTeam1Id());
+                return team != null ? team.getName() : "Team " + match.getTeam1Id();
+            });
         });
 
         matchTeam2Col.setCellValueFactory(cellData -> {
             Match match = cellData.getValue();
-            if (match != null) {
-                Team team2 = teamDAO.getTeamById(match.getTeam2Id());
-                return javafx.beans.binding.Bindings.createStringBinding(
-                        () -> team2 != null ? team2.getName() : "Team " + match.getTeam2Id());
-            }
-            return javafx.beans.binding.Bindings.createStringBinding(() -> "Unknown");
+            return javafx.beans.binding.Bindings.createStringBinding(() -> {
+                if (match == null) {
+                    return "Unknown";
+                }
+                Team team = findTeamInCache(match.getTeam2Id());
+                return team != null ? team.getName() : "Team " + match.getTeam2Id();
+            });
         });
 
         matchScoreCol.setCellValueFactory(cellData -> {
@@ -130,6 +159,18 @@ public class MatchesTabController {
         matchRoundCol.setCellValueFactory(new PropertyValueFactory<>("round"));
 
         matchesTable.setItems(matchesData);
+    }
+
+    private Team findTeamInCache(int teamId) {
+        if (teamsData == null) {
+            return null;
+        }
+        for (Team team : teamsData) {
+            if (team.getId() == teamId) {
+                return team;
+            }
+        }
+        return null;
     }
 
     public void loadMatchesForTournament(int tournamentId) {
