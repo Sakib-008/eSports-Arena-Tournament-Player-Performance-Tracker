@@ -8,6 +8,7 @@ import com.esports.arena.dao.PlayerDAO;
 import com.esports.arena.dao.TeamDAO;
 import com.esports.arena.model.Player;
 import com.esports.arena.model.Team;
+import com.esports.arena.util.LoadingDialog;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -79,6 +80,7 @@ public class PlayersTabController {
     }
 
     public void loadPlayers() {
+        LoadingDialog.showLoading("Loading players...");
         Task<List<Player>> loadPlayersTask = new Task<>() {
             @Override
             protected List<Player> call() {
@@ -86,21 +88,39 @@ public class PlayersTabController {
             }
         };
 
-        loadPlayersTask.setOnSucceeded(e ->
-                playersData.setAll(loadPlayersTask.getValue()));
+        loadPlayersTask.setOnSucceeded(e -> {
+                playersData.setAll(loadPlayersTask.getValue());
+                LoadingDialog.hideLoading();
+        });
 
-        loadPlayersTask.setOnFailed(e ->
-                MainApp.showError("Error", "Failed to load players"));
+        loadPlayersTask.setOnFailed(e -> {
+                MainApp.showError("Error", "Failed to load players");
+                LoadingDialog.hideLoading();
+        });
 
         new Thread(loadPlayersTask).start();
     }
 
     public void updatePlayersList() {
-        // Real-time update method for background refresh
-        List<Player> players = playerDAO.getAllPlayers();
-        if (players != null) {
-            playersData.setAll(players);
-        }
+        LoadingDialog.showLoading("Refreshing players...");
+        Task<List<Player>> task = new Task<>() {
+            @Override
+            protected List<Player> call() {
+                return playerDAO.getAllPlayers();
+            }
+        };
+        
+        task.setOnSucceeded(e -> {
+            List<Player> players = task.getValue();
+            if (players != null) {
+                playersData.setAll(players);
+            }
+            LoadingDialog.hideLoading();
+        });
+        
+        task.setOnFailed(e -> LoadingDialog.hideLoading());
+        
+        new Thread(task).start();
     }
 
     @FXML

@@ -2,6 +2,7 @@ package com.esports.arena;
 
 import com.esports.arena.dao.PlayerDAO;
 import com.esports.arena.model.Player;
+import com.esports.arena.util.LoadingDialog;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -41,6 +42,7 @@ public class PlayerLoginController {
         }
 
         loginBtn.setDisable(true);
+        LoadingDialog.showLoading("Logging in...");
 
         // Authenticate player in background
         Task<Player> task = new Task<Player>() {
@@ -56,6 +58,7 @@ public class PlayerLoginController {
 
         task.setOnSucceeded(e -> {
             loginBtn.setDisable(false);
+            LoadingDialog.hideLoading();
             Player player = task.getValue();
             if (player != null) {
                 if (mainApp != null) {
@@ -69,6 +72,7 @@ public class PlayerLoginController {
 
         task.setOnFailed(e -> {
             loginBtn.setDisable(false);
+            LoadingDialog.hideLoading();
             errorLabel.setText("Login failed: " + task.getException().getMessage());
         });
 

@@ -2,6 +2,7 @@ package com.esports.arena;
 
 import com.esports.arena.dao.PlayerDAO;
 import com.esports.arena.model.Player;
+import com.esports.arena.util.LoadingDialog;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -79,6 +80,7 @@ public class PlayerSignupController {
         }
 
         signupBtn.setDisable(true);
+        LoadingDialog.showLoading("Creating account...");
 
         // Create player in background
         Task<Integer> task = new Task<Integer>() {
@@ -112,6 +114,7 @@ public class PlayerSignupController {
 
         task.setOnSucceeded(e -> {
             signupBtn.setDisable(false);
+            LoadingDialog.hideLoading();
             int playerId = task.getValue();
             if (playerId == -1) {
                 errorLabel.setText("❌ Username already exists. Please choose a different username.");
@@ -143,6 +146,7 @@ public class PlayerSignupController {
 
         task.setOnFailed(e -> {
             signupBtn.setDisable(false);
+            LoadingDialog.hideLoading();
             errorLabel.setText("Signup failed: " + task.getException().getMessage());
         });
 

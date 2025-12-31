@@ -1,8 +1,11 @@
 package com.esports.arena.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PlayerMatchStats {
     @JsonProperty("id")
     private int id;
@@ -71,10 +74,12 @@ public class PlayerMatchStats {
     public boolean isMvp() { return mvp; }
     public void setMvp(boolean mvp) { this.mvp = mvp; }
 
+    @JsonIgnore
     public double getKdRatio() {
         return deaths == 0 ? kills : (double) kills / deaths;
     }
 
+    @JsonIgnore
     public double getKdaRatio() {
         return deaths == 0 ? (kills + assists) : (double) (kills + assists) / deaths;
     }

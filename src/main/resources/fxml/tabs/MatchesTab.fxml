@@ -7,6 +7,14 @@
             fx:controller="com.esports.arena.tabs.MatchesTabController"
             stylesheets="@../../css/styles.css">
 
+    <top>
+        <HBox spacing="10" style="-fx-padding: 10;" alignment="CENTER_LEFT">
+            <Label text="Filter by Tournament:"/>
+            <ComboBox fx:id="tournamentFilterCombo" promptText="All Tournaments" prefWidth="200"/>
+            <Button text="Show All" onAction="#handleShowAllMatches" styleClass="secondary-button"/>
+        </HBox>
+    </top>
+
     <center>
         <AnchorPane>
             <children>

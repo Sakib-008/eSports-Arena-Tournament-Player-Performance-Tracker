@@ -26,11 +26,5 @@
             </columns>
         </TableView>
     </center>
-    <bottom>
-        <HBox style="-fx-padding: 10;">
-            <Button fx:id="refreshLeaderboardBtn" text="Refresh"
-                    onAction="#handleRefreshLeaderboard" styleClass="primary-button"/>
-        </HBox>
-    </bottom>
 </BorderPane>
 

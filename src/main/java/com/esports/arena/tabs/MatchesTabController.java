@@ -6,6 +6,7 @@ import com.esports.arena.MainApp;
 import com.esports.arena.dao.MatchDAO;
 import com.esports.arena.dao.PlayerDAO;
 import com.esports.arena.dao.TeamDAO;
+import com.esports.arena.util.LoadingDialog;
 import com.esports.arena.model.Match;
 import com.esports.arena.model.Player;
 import com.esports.arena.model.Team;
@@ -17,8 +18,10 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.control.TableColumn;
@@ -38,8 +41,10 @@ public class MatchesTabController {
     @FXML private TableColumn<Match, String> matchRoundCol;
     @FXML private Button viewMatchDetailsBtn;
     @FXML private Button editMatchStatsBtn;
+    @FXML private ComboBox<com.esports.arena.model.Tournament> tournamentFilterCombo;
 
     private MatchDAO matchDAO;
+    private com.esports.arena.dao.TournamentDAO tournamentDAO;
     private TeamDAO teamDAO;
     private PlayerDAO playerDAO;
     private ObservableList<Match> matchesData;
@@ -50,9 +55,41 @@ public class MatchesTabController {
         this.teamDAO = teamDAO;
         this.playerDAO = playerDAO;
         this.teamsData = teamsData;
+        this.tournamentDAO = new com.esports.arena.dao.TournamentDAO();
         this.matchesData = FXCollections.observableArrayList();
         setupMatchesTable();
+        setupTournamentFilter();
         loadAllMatches();
+    }
+
+    private void setupTournamentFilter() {
+        if (tournamentFilterCombo != null) {
+            List<com.esports.arena.model.Tournament> tournaments = tournamentDAO.getAllTournaments();
+            tournamentFilterCombo.setItems(FXCollections.observableArrayList(tournaments));
+            
+            tournamentFilterCombo.setCellFactory(param -> new ListCell<com.esports.arena.model.Tournament>() {
+                @Override
+                protected void updateItem(com.esports.arena.model.Tournament item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? null : item.getName() + " (" + item.getStatus() + ")");
+                }
+            });
+            
+            tournamentFilterCombo.setButtonCell(new ListCell<com.esports.arena.model.Tournament>() {
+                @Override
+                protected void updateItem(com.esports.arena.model.Tournament item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? "All Tournaments" : item.getName());
+                }
+            });
+            
+            tournamentFilterCombo.setOnAction(e -> {
+                com.esports.arena.model.Tournament selected = tournamentFilterCombo.getValue();
+                if (selected != null) {
+                    loadMatchesForTournament(selected.getId());
+                }
+            });
+        }
     }
 
     private void setupMatchesTable() {
@@ -96,6 +133,7 @@ public class MatchesTabController {
     }
 
     public void loadMatchesForTournament(int tournamentId) {
+        LoadingDialog.showLoading("Loading matches...");
         Task<List<Match>> task = new Task<>() {
             @Override
             protected List<Match> call() {
@@ -107,22 +145,26 @@ public class MatchesTabController {
         task.setOnSucceeded(e -> {
             List<Match> matches = task.getValue();
             matchesData.setAll(matches);
-            if (matches.isEmpty()) {
-                MainApp.showInfo("No Matches", "No matches found for this tournament. Create matches first.");
-            } else {
-                MainApp.showInfo("Matches Loaded", "Showing " + matches.size() + " match(es) for tournament");
-            }
+            LoadingDialog.hideLoading();
         });
 
         task.setOnFailed(e -> {
             MainApp.showError("Error", "Failed to load matches: " + task.getException().getMessage());
             matchesData.clear();
+            LoadingDialog.hideLoading();
         });
 
         new Thread(task).start();
     }
+    
+    @FXML
+    private void handleShowAllMatches() {
+        tournamentFilterCombo.setValue(null);
+        loadAllMatches();
+    }
 
     public void loadAllMatches() {
+        LoadingDialog.showLoading("Loading all matches...");
         Task<List<Match>> task = new Task<>() {
             @Override
             protected List<Match> call() {
@@ -136,22 +178,38 @@ public class MatchesTabController {
             if (matches.isEmpty()) {
                 System.out.println("No matches found in database. Create matches from tournaments.");
             }
+            LoadingDialog.hideLoading();
         });
 
         task.setOnFailed(e -> {
             MainApp.showError("Error", "Failed to load matches: " + task.getException().getMessage());
             matchesData.clear();
+            LoadingDialog.hideLoading();
         });
 
         new Thread(task).start();
     }
 
     public void updateMatchesList() {
-        // Real-time update method for background refresh
-        List<Match> matches = matchDAO.getAllMatches();
-        if (matches != null) {
-            matchesData.setAll(matches);
-        }
+        LoadingDialog.showLoading("Refreshing matches...");
+        Task<List<Match>> task = new Task<>() {
+            @Override
+            protected List<Match> call() {
+                return matchDAO.getAllMatches();
+            }
+        };
+        
+        task.setOnSucceeded(e -> {
+            List<Match> matches = task.getValue();
+            if (matches != null) {
+                matchesData.setAll(matches);
+            }
+            LoadingDialog.hideLoading();
+        });
+        
+        task.setOnFailed(e -> LoadingDialog.hideLoading());
+        
+        new Thread(task).start();
     }
 
     @FXML

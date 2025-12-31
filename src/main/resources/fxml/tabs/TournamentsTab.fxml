@@ -39,10 +39,14 @@
                     onAction="#handleStartTournament" styleClass="success-button"/>
             <Button fx:id="manageTeamsBtn" text="Manage Teams"
                     onAction="#handleManageTeams" styleClass="primary-button"/>
+        </HBox>
+        <HBox spacing="10">
             <Button fx:id="createMatchBtn" text="Create Match"
                     onAction="#handleCreateMatch" styleClass="success-button"/>
             <Button fx:id="viewMatchesBtn" text="View Matches"
                     onAction="#handleViewMatches" styleClass="primary-button"/>
+            <Button fx:id="finishTournamentBtn" text="Finish Tournament"
+                    onAction="#handleFinishTournament" styleClass="warning-button"/>
         </HBox>
     </VBox>
 </SplitPane>

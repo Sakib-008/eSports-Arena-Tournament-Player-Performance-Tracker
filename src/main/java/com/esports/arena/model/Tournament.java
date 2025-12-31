@@ -36,6 +36,9 @@ public class Tournament {
     @JsonProperty("maxTeams")
     private int maxTeams;
 
+    @JsonProperty("winnerId")
+    private Integer winnerId;
+
     @JsonProperty("registeredTeams")
     private List<Team> registeredTeams;
 
@@ -90,6 +93,9 @@ public class Tournament {
 
     public int getMaxTeams() { return maxTeams; }
     public void setMaxTeams(int maxTeams) { this.maxTeams = maxTeams; }
+
+    public Integer getWinnerId() { return winnerId; }
+    public void setWinnerId(Integer winnerId) { this.winnerId = winnerId; }
 
     public List<Team> getRegisteredTeams() { return registeredTeams; }
     public void setRegisteredTeams(List<Team> registeredTeams) { this.registeredTeams = registeredTeams; }

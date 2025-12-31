@@ -2,6 +2,7 @@ package com.esports.arena;
 
 import com.esports.arena.dao.OrganizerDAO;
 import com.esports.arena.model.Organizer;
+import com.esports.arena.util.LoadingDialog;
 
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -43,6 +44,7 @@ public class OrganizerLoginController {
         // Disable login button to prevent multiple clicks
         loginBtn.setDisable(true);
         helpLabel.setText("Authenticating...");
+        LoadingDialog.showLoading("Logging in...");
 
         Task<Organizer> loginTask = new Task<>() {
             @Override
@@ -52,6 +54,7 @@ public class OrganizerLoginController {
         };
 
         loginTask.setOnSucceeded(e -> {
+            LoadingDialog.hideLoading();
             Organizer organizer = loginTask.getValue();
             if (organizer != null) {
                 if (mainApp != null) {
@@ -65,6 +68,7 @@ public class OrganizerLoginController {
         });
 
         loginTask.setOnFailed(e -> {
+            LoadingDialog.hideLoading();
             helpLabel.setText("Authentication error. Please try again.");
             loginBtn.setDisable(false);
         });

@@ -8,6 +8,7 @@ import com.esports.arena.dao.PlayerDAO;
 import com.esports.arena.dao.TeamDAO;
 import com.esports.arena.model.Player;
 import com.esports.arena.model.Team;
+import com.esports.arena.util.LoadingDialog;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -74,6 +75,7 @@ public class TeamsTabController {
     }
 
     public void loadTeams() {
+        LoadingDialog.showLoading("Loading teams...");
         Task<List<Team>> loadTeamsTask = new Task<>() {
             @Override
             protected List<Team> call() {
@@ -83,19 +85,37 @@ public class TeamsTabController {
 
         loadTeamsTask.setOnSucceeded(e -> {
             teamsData.setAll(loadTeamsTask.getValue());
+            LoadingDialog.hideLoading();
         });
 
-        loadTeamsTask.setOnFailed(e -> MainApp.showError("Error", "Failed to load teams"));
+        loadTeamsTask.setOnFailed(e -> {
+            MainApp.showError("Error", "Failed to load teams");
+            LoadingDialog.hideLoading();
+        });
 
         new Thread(loadTeamsTask).start();
     }
 
     public void updateTeamsList() {
-        // Real-time update method for background refresh
-        List<Team> teams = teamDAO.getAllTeams();
-        if (teams != null) {
-            teamsData.setAll(teams);
-        }
+        LoadingDialog.showLoading("Refreshing teams...");
+        Task<List<Team>> task = new Task<>() {
+            @Override
+            protected List<Team> call() {
+                return teamDAO.getAllTeams();
+            }
+        };
+        
+        task.setOnSucceeded(e -> {
+            List<Team> teams = task.getValue();
+            if (teams != null) {
+                teamsData.setAll(teams);
+            }
+            LoadingDialog.hideLoading();
+        });
+        
+        task.setOnFailed(e -> LoadingDialog.hideLoading());
+        
+        new Thread(task).start();
     }
 
     @FXML

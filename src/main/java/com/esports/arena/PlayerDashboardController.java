@@ -11,6 +11,7 @@ import com.esports.arena.tabs.PlayerProfileTabController;
 import com.esports.arena.tabs.PlayerStatsTabController;
 import com.esports.arena.tabs.PlayerTeamTabController;
 import com.esports.arena.tabs.PlayerVotingTabController;
+import com.esports.arena.util.LoadingDialog;
 
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -66,28 +67,58 @@ public class PlayerDashboardController {
     }
 
     public void setCurrentPlayer(Player player) {
+        LoadingDialog.showLoading("Loading player data...");
         this.currentPlayer = player;
-        if (profileTabController != null) {
-            profileTabController.loadPlayer(player);
         
-        }if (statsTabController != null) {
-            statsTabController.refreshForPlayer(player);
+        Task<Void> loadTask = new Task<>() {
+            @Override
+            protected Void call() {
+                return null;
+            }
+        };
         
-        }if (teamTabController != null) {
-            teamTabController.setCurrentPlayer(player);
+        loadTask.setOnSucceeded(e -> {
+            if (profileTabController != null) {
+                profileTabController.loadPlayer(player);
+            
+            }if (statsTabController != null) {
+                statsTabController.refreshForPlayer(player);
+            
+            }if (teamTabController != null) {
+                teamTabController.setCurrentPlayer(player);
+            
+            }if (votingTabController != null) {
+                votingTabController.setCurrentPlayer(player);
+            }
+            LoadingDialog.hideLoading();
+        });
         
-        }if (votingTabController != null) {
-            votingTabController.setCurrentPlayer(player);
-        }
+        new Thread(loadTask).start();
     }
     
     @FXML
     private void handleRefresh() {
         if (currentPlayer != null) {
-            Player refreshedPlayer = playerDAO.getPlayerById(currentPlayer.getId());
-            if (refreshedPlayer != null) {
-                setCurrentPlayer(refreshedPlayer);
-            }
+            LoadingDialog.showLoading("Refreshing data...");
+            Task<Player> refreshTask = new Task<>() {
+                @Override
+                protected Player call() {
+                    return playerDAO.getPlayerById(currentPlayer.getId());
+                }
+            };
+            
+            refreshTask.setOnSucceeded(e -> {
+                Player refreshedPlayer = refreshTask.getValue();
+                if (refreshedPlayer != null) {
+                    setCurrentPlayer(refreshedPlayer);
+                } else {
+                    LoadingDialog.hideLoading();
+                }
+            });
+            
+            refreshTask.setOnFailed(e -> LoadingDialog.hideLoading());
+            
+            new Thread(refreshTask).start();
         }
     }
 

@@ -10,6 +10,7 @@ import com.esports.arena.dao.TournamentDAO;
 import com.esports.arena.model.Match;
 import com.esports.arena.model.Team;
 import com.esports.arena.model.Tournament;
+import com.esports.arena.util.LoadingDialog;
 
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
@@ -27,7 +28,6 @@ public class LeaderboardTabController {
     @FXML private TableColumn<Team, Integer> lbWinsCol;
     @FXML private TableColumn<Team, Integer> lbLossesCol;
     @FXML private TableColumn<Team, Double> lbWinRateCol;
-    @FXML private Button refreshLeaderboardBtn;
     @FXML private ComboBox<Tournament> tournamentFilterCombo;
 
     private TeamDAO teamDAO;
@@ -107,12 +107,8 @@ public class LeaderboardTabController {
         updateLeaderboard();
     }
 
-    @FXML
-    private void handleRefreshLeaderboard() {
-        updateLeaderboard();
-    }
-
     public void updateLeaderboard() {
+        LoadingDialog.showLoading("Updating leaderboard...");
         Task<List<Team>> task = new Task<>() {
             @Override
             protected List<Team> call() {
@@ -126,11 +122,15 @@ public class LeaderboardTabController {
             }
         };
 
-        task.setOnSucceeded(e ->
-                leaderboardTable.setItems(FXCollections.observableArrayList(task.getValue())));
+        task.setOnSucceeded(e -> {
+                leaderboardTable.setItems(FXCollections.observableArrayList(task.getValue()));
+                LoadingDialog.hideLoading();
+        });
 
-        task.setOnFailed(e ->
-                MainApp.showError("Error", "Failed to update leaderboard"));
+        task.setOnFailed(e -> {
+                MainApp.showError("Error", "Failed to update leaderboard");
+                LoadingDialog.hideLoading();
+        });
 
         new Thread(task).start();
     }

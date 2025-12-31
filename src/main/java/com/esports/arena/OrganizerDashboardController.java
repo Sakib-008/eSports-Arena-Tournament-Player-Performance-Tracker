@@ -9,6 +9,7 @@ import com.esports.arena.dao.TeamDAO;
 import com.esports.arena.dao.TournamentDAO;
 import com.esports.arena.model.Team;
 import com.esports.arena.service.JsonExportImportService;
+import com.esports.arena.util.LoadingDialog;
 import com.esports.arena.tabs.LeaderboardTabController;
 import com.esports.arena.tabs.MatchesTabController;
 import com.esports.arena.tabs.PlayersTabController;
@@ -68,29 +69,55 @@ public class OrganizerDashboardController {
         jsonService = new JsonExportImportService();
         teamsData = FXCollections.observableArrayList();
         
+        LoadingDialog.showLoading("Loading organizer dashboard...");
         initializeTabControllers();
         loadAllData();
     }
 
     @FXML
     private void handleRefresh() {
-        loadAllData();
+        LoadingDialog.showLoading("Refreshing all data...");
         
-        if (teamsTabController != null) {
-            teamsTabController.updateTeamsList();
-        }
-        if (playersTabController != null) {
-            playersTabController.updatePlayersList();
-        }
-        if (tournamentsTabController != null) {
-            tournamentsTabController.updateTournamentsList();
-        }
-        if (matchesTabController != null) {
-            matchesTabController.updateMatchesList();
-        }
-        if (leaderboardTabController != null) {
-            leaderboardTabController.updateLeaderboard();
-        }
+        Task<Void> refreshTask = new Task<>() {
+            @Override
+            protected Void call() {
+                // Load all data in background
+                return null;
+            }
+        };
+        
+        refreshTask.setOnSucceeded(e -> {
+            // Trigger all tab updates (they are already async)
+            if (teamsTabController != null) {
+                teamsTabController.updateTeamsList();
+            }
+            if (playersTabController != null) {
+                playersTabController.updatePlayersList();
+            }
+            if (tournamentsTabController != null) {
+                tournamentsTabController.updateTournamentsList();
+            }
+            if (matchesTabController != null) {
+                matchesTabController.updateMatchesList();
+            }
+            if (leaderboardTabController != null) {
+                leaderboardTabController.updateLeaderboard();
+            }
+            
+            // Hide loading after a short delay to ensure all updates start
+            javafx.application.Platform.runLater(() -> {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ex) {
+                    // Ignore
+                }
+                LoadingDialog.hideLoading();
+            });
+        });
+        
+        refreshTask.setOnFailed(e -> LoadingDialog.hideLoading());
+        
+        new Thread(refreshTask).start();
     }
 
     private void initializeTabControllers() {
