@@ -7,6 +7,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 
+import com.esports.arena.util.EnvLoader;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -15,7 +16,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 public class RealtimeDatabaseService {
 
         private static final String DB_URL = "https://esports-arena-7fb9b-default-rtdb.firebaseio.com/";
-        private static final String TOKEN = System.getenv("FIREBASE_DB_TOKEN");
+        private static final String TOKEN = EnvLoader.get("FIREBASE_DB_TOKEN");
         private static final HttpClient CLIENT = HttpClient.newHttpClient();
         private static final ObjectMapper MAPPER = new ObjectMapper()
                         .registerModule(new JavaTimeModule())
