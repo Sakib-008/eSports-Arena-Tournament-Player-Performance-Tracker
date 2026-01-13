@@ -1,20 +1,24 @@
 package com.esports.arena;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
+import com.esports.arena.dao.LeaderVoteDAO;
 import com.esports.arena.dao.MatchDAO;
 import com.esports.arena.dao.PlayerDAO;
 import com.esports.arena.dao.TeamDAO;
 import com.esports.arena.dao.TournamentDAO;
+import com.esports.arena.model.Match;
+import com.esports.arena.model.PlayerMatchStats;
 import com.esports.arena.model.Team;
 import com.esports.arena.service.JsonExportImportService;
-import com.esports.arena.util.LoadingDialog;
 import com.esports.arena.tabs.LeaderboardTabController;
 import com.esports.arena.tabs.MatchesTabController;
 import com.esports.arena.tabs.PlayersTabController;
 import com.esports.arena.tabs.TeamsTabController;
 import com.esports.arena.tabs.TournamentsTabController;
+import com.esports.arena.util.LoadingDialog;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -46,6 +50,7 @@ public class OrganizerDashboardController {
     private PlayerDAO playerDAO;
     private TournamentDAO tournamentDAO;
     private MatchDAO matchDAO;
+    private LeaderVoteDAO leaderVoteDAO;
     private JsonExportImportService jsonService;
 
     private ObservableList<Team> teamsData;
@@ -66,6 +71,7 @@ public class OrganizerDashboardController {
         playerDAO = new PlayerDAO();
         tournamentDAO = new TournamentDAO();
         matchDAO = new MatchDAO();
+        leaderVoteDAO = new LeaderVoteDAO();
         jsonService = new JsonExportImportService();
         teamsData = FXCollections.observableArrayList();
         
@@ -206,22 +212,54 @@ public class OrganizerDashboardController {
         File file = fileChooser.showSaveDialog(mainTabPane.getScene().getWindow());
 
         if (file != null) {
+            LoadingDialog.showLoading("Exporting all data...");
+            
             Task<Boolean> exportTask = new Task<>() {
                 @Override
                 protected Boolean call() {
-                    JsonExportImportService.ExportData data = new JsonExportImportService.ExportData();
-                    data.setPlayers(playerDAO.getAllPlayers());
-                    data.setTeams(teamDAO.getAllTeams());
-                    return jsonService.exportAllDataAsync(data, file.getAbsolutePath()).join();
+                    try {
+                        JsonExportImportService.ExportData data = new JsonExportImportService.ExportData();
+                        
+                        // Gather all data
+                        data.setPlayers(playerDAO.getAllPlayers());
+                        data.setTeams(teamDAO.getAllTeams());
+                        data.setTournaments(tournamentDAO.getAllTournaments());
+                        data.setMatches(matchDAO.getAllMatches());
+                        
+                        // Collect all player match stats from all matches
+                        List<PlayerMatchStats> allStats = new ArrayList<>();
+                        for (Match match : data.getMatches()) {
+                            if (match.getPlayerStats() != null) {
+                                allStats.addAll(match.getPlayerStats());
+                            }
+                        }
+                        data.setStats(allStats);
+                        
+                        return jsonService.exportAllDataAsync(data, file.getAbsolutePath()).join();
+                    } catch (Exception e) {
+                        System.err.println("Export error: " + e.getMessage());
+                        e.printStackTrace();
+                        return false;
+                    }
                 }
             };
 
             exportTask.setOnSucceeded(e -> {
+                LoadingDialog.hideLoading();
                 if (exportTask.getValue()) {
-                    MainApp.showInfo("Export", "Data exported successfully to: " + file.getName());
+                    MainApp.showInfo("Export Complete", 
+                        "All data exported successfully!\n\n" +
+                        "File: " + file.getName() + "\n" +
+                        "Location: " + file.getParent());
                 } else {
-                    MainApp.showError("Export", "Failed to export data");
+                    MainApp.showError("Export Failed", "Failed to export data. Check console for details.");
                 }
+            });
+            
+            exportTask.setOnFailed(e -> {
+                LoadingDialog.hideLoading();
+                MainApp.showError("Export Error", "An error occurred during export: " + 
+                    exportTask.getException().getMessage());
             });
 
             new Thread(exportTask).start();
@@ -230,6 +268,17 @@ public class OrganizerDashboardController {
 
     @FXML
     private void handleImportData() {
+        // Confirmation dialog
+        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmAlert.setTitle("Import Data");
+        confirmAlert.setHeaderText("Import data from JSON file?");
+        confirmAlert.setContentText("Warning: This will add imported data to the existing database.\n" +
+                "Duplicate IDs may cause conflicts.\n\nContinue?");
+        
+        if (confirmAlert.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
+            return;
+        }
+        
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Import Data");
         fileChooser.getExtensionFilters().add(
@@ -237,8 +286,97 @@ public class OrganizerDashboardController {
         File file = fileChooser.showOpenDialog(mainTabPane.getScene().getWindow());
 
         if (file != null) {
-            MainApp.showInfo("Import", "Import functionality - data will be loaded from: " + file.getName());
-            loadAllData();
+            LoadingDialog.showLoading("Importing data...");
+            
+            Task<Boolean> importTask = new Task<>() {
+                @Override
+                protected Boolean call() {
+                    try {
+                        JsonExportImportService.ExportData data = 
+                            jsonService.importAllDataAsync(file.getAbsolutePath()).join();
+                        
+                        if (data == null) {
+                            return false;
+                        }
+                        
+                        int playersCount = 0, teamsCount = 0, tournamentsCount = 0, 
+                            matchesCount = 0, statsCount = 0;
+                        
+                        // Import players
+                        if (data.getPlayers() != null) {
+                            for (com.esports.arena.model.Player player : data.getPlayers()) {
+                                if (playerDAO.createPlayer(player) > 0) {
+                                    playersCount++;
+                                }
+                            }
+                        }
+                        
+                        // Import teams
+                        if (data.getTeams() != null) {
+                            for (Team team : data.getTeams()) {
+                                if (teamDAO.createTeam(team) > 0) {
+                                    teamsCount++;
+                                }
+                            }
+                        }
+                        
+                        // Import tournaments
+                        if (data.getTournaments() != null) {
+                            for (com.esports.arena.model.Tournament tournament : data.getTournaments()) {
+                                if (tournamentDAO.createTournament(tournament) > 0) {
+                                    tournamentsCount++;
+                                }
+                            }
+                        }
+                        
+                        // Import matches (with their stats embedded)
+                        if (data.getMatches() != null) {
+                            for (Match match : data.getMatches()) {
+                                if (matchDAO.createMatch(match) > 0) {
+                                    matchesCount++;
+                                    if (match.getPlayerStats() != null) {
+                                        statsCount += match.getPlayerStats().size();
+                                    }
+                                }
+                            }
+                        }
+                        
+                        updateMessage("Imported:\n" +
+                            playersCount + " players\n" +
+                            teamsCount + " teams\n" +
+                            tournamentsCount + " tournaments\n" +
+                            matchesCount + " matches\n" +
+                            statsCount + " player stats");
+                        
+                        return true;
+                    } catch (Exception e) {
+                        System.err.println("Import error: " + e.getMessage());
+                        e.printStackTrace();
+                        return false;
+                    }
+                }
+            };
+
+            importTask.setOnSucceeded(e -> {
+                LoadingDialog.hideLoading();
+                if (importTask.getValue()) {
+                    MainApp.showInfo("Import Complete", 
+                        "Data imported successfully!\n\n" + importTask.getMessage());
+                    // Refresh all tabs
+                    handleRefresh();
+                } else {
+                    MainApp.showError("Import Failed", 
+                        "Failed to import data. Check console for details.");
+                }
+            });
+            
+            importTask.setOnFailed(e -> {
+                LoadingDialog.hideLoading();
+                MainApp.showError("Import Error", 
+                    "An error occurred during import: " + importTask.getException().getMessage());
+            });
+
+            new Thread(importTask).start();
         }
     }
 }
