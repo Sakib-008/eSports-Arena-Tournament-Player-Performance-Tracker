@@ -19,12 +19,83 @@ Desktop JavaFX application for managing eSports tournaments, teams, matches, and
 - JUnit 5 for tests
 
 ## Project Structure
-- `src/main/java/com/esports/arena/MainApp.java` — JavaFX entry point and scene navigation.
-- `src/main/java/com/esports/arena/dao/*` — Data access for players, teams, tournaments, matches, votes (Firebase-backed).
-- `src/main/java/com/esports/arena/model/*` — Domain models for users, teams, tournaments, matches, and stats.
-- `src/main/java/com/esports/arena/tabs/*` — Tab controllers for organizer/player dashboards.
-- `src/main/java/com/esports/arena/service/*` — Firebase client, JSON import/export, and stat aggregation.
-- `src/main/resources/fxml/**` — FXML layouts for screens and tabs; `css/` for styling.
+```
+esports-arena/
+├── pom.xml                          # Maven configuration
+├── mvnw, mvnw.cmd                   # Maven wrapper scripts
+├── README.md                        # Project documentation
+├── scripts/                         # Utility scripts
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   ├── module-info.java    # Java module definition
+│   │   │   └── com/esports/arena/
+│   │   │       ├── MainApp.java                      # JavaFX entry point
+│   │   │       ├── MainMenuController.java           # Main menu controller
+│   │   │       ├── OrganizerDashboardController.java # Organizer dashboard
+│   │   │       ├── OrganizerLoginController.java     # Organizer login
+│   │   │       ├── PlayerDashboardController.java    # Player dashboard
+│   │   │       ├── PlayerLoginController.java        # Player login
+│   │   │       ├── PlayerSignupController.java       # Player signup
+│   │   │       ├── dao/                              # Data Access Objects
+│   │   │       │   ├── LeaderVoteDAO.java           # Leader voting data access
+│   │   │       │   ├── MatchDAO.java                # Match data access
+│   │   │       │   ├── OrganizerDAO.java            # Organizer data access
+│   │   │       │   ├── PlayerDAO.java               # Player data access
+│   │   │       │   ├── TeamDAO.java                 # Team data access
+│   │   │       │   └── TournamentDAO.java           # Tournament data access
+│   │   │       ├── database/
+│   │   │       │   └── DatabaseManager.java         # Database connection manager
+│   │   │       ├── model/                           # Domain Models
+│   │   │       │   ├── LeaderVote.java             # Leader vote model
+│   │   │       │   ├── Match.java                  # Match model
+│   │   │       │   ├── Organizer.java              # Organizer model
+│   │   │       │   ├── Player.java                 # Player model
+│   │   │       │   ├── PlayerMatchStats.java       # Player match statistics
+│   │   │       │   ├── Team.java                   # Team model
+│   │   │       │   ├── Tournament.java             # Tournament model
+│   │   │       │   └── User.java                   # Base user model
+│   │   │       ├── service/                         # Business Logic Services
+│   │   │       │   ├── JsonExportImportService.java     # JSON export/import
+│   │   │       │   ├── RealtimeDatabaseService.java     # Firebase client
+│   │   │       │   └── TournamentStatsService.java      # Statistics aggregation
+│   │   │       ├── tabs/                            # Dashboard Tab Controllers
+│   │   │       │   ├── LeaderboardTabController.java    # Leaderboard tab
+│   │   │       │   ├── MatchesTabController.java        # Matches tab
+│   │   │       │   ├── PlayerProfileTabController.java  # Player profile tab
+│   │   │       │   ├── PlayersTabController.java        # Players management
+│   │   │       │   ├── PlayerStatsTabController.java    # Player statistics
+│   │   │       │   ├── PlayerTeamTabController.java     # Player team view
+│   │   │       │   ├── PlayerVotingTabController.java   # Voting interface
+│   │   │       │   ├── TeamsTabController.java          # Teams management
+│   │   │       │   └── TournamentsTabController.java    # Tournament management
+│   │   │       └── util/                            # Utility Classes
+│   │   └── resources/
+│   │       ├── css/
+│   │       │   └── styles.css                       # Application styles
+│   │       └── fxml/                                # FXML Layouts
+│   │           ├── MainMenu.fxml                    # Main menu layout
+│   │           ├── OrganizerDashboard.fxml         # Organizer dashboard layout
+│   │           ├── OrganizerLogin.fxml             # Organizer login layout
+│   │           ├── PlayerDashboard.fxml            # Player dashboard layout
+│   │           ├── PlayerLogin.fxml                # Player login layout
+│   │           ├── PlayerSignup.fxml               # Player signup layout
+│   │           └── tabs/                            # Tab Layouts
+│   │               ├── LeaderboardTab.fxml         # Leaderboard tab layout
+│   │               ├── MatchesTab.fxml             # Matches tab layout
+│   │               ├── PlayerProfileTab.fxml       # Player profile tab layout
+│   │               ├── PlayersTab.fxml             # Players tab layout
+│   │               ├── PlayerStatsTab.fxml         # Player stats tab layout
+│   │               ├── PlayerTeamTab.fxml          # Player team tab layout
+│   │               ├── PlayerVotingTab.fxml        # Voting tab layout
+│   │               ├── TeamsTab.fxml               # Teams tab layout
+│   │               └── TournamentsTab.fxml         # Tournaments tab layout
+│   └── test/
+│       └── java/
+│           └── com/esports/arena/
+│               └── dao/                             # DAO Unit Tests
+└── target/                                          # Compiled classes (generated)
+```
 
 ## Prerequisites
 - JDK 25 (or newer JDK matching the Maven `source`/`target` values)
