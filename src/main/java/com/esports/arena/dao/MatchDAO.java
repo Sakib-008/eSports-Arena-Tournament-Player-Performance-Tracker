@@ -95,10 +95,13 @@ public class MatchDAO {
 
     public boolean updateMatch(Match match) {
         try {
+            System.out.println("MatchDAO.updateMatch() - Saving match ID " + match.getId() + " with status " + match.getStatus() + " and score " + match.getTeam1Score() + "-" + match.getTeam2Score());
             RealtimeDatabaseService.write(path(match.getId()), match);
+            System.out.println("MatchDAO.updateMatch() - Match saved successfully to database");
             return true;
         } catch (Exception e) {
             System.err.println("Error updating match: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }

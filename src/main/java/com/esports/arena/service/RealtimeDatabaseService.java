@@ -162,7 +162,10 @@ public class RealtimeDatabaseService {
                                 .header("Content-Type", "application/json")
                                 .method(method, HttpRequest.BodyPublishers.ofString(json))
                                 .build();
-                CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
+                HttpResponse<String> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                        throw new IllegalStateException("HTTP " + response.statusCode() + " - " + response.body());
+                }
         }
 
         private static Long parseLong(String body) {

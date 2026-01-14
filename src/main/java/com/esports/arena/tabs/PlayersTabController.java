@@ -48,6 +48,7 @@ public class PlayersTabController {
     private ObservableList<Player> playersData;
     private ObservableList<Team> teamsData;
     private com.esports.arena.MainApp mainApp;
+    private Runnable onPlayerUpdateCallback;
 
     public void initialize(PlayerDAO playerDAO, TeamDAO teamDAO, ObservableList<Team> teamsData) {
         this.playerDAO = playerDAO;
@@ -55,6 +56,10 @@ public class PlayersTabController {
         this.playersData = FXCollections.observableArrayList();
         setupPlayersTable();
         loadPlayers();
+    }
+
+    public void setOnPlayerUpdateCallback(Runnable callback) {
+        this.onPlayerUpdateCallback = callback;
     }
 
     public void setMainApp(MainApp mainApp) {
@@ -102,23 +107,29 @@ public class PlayersTabController {
     }
 
     public void updatePlayersList() {
+        System.out.println("PlayersTabController.updatePlayersList() called");
         LoadingDialog.showLoading("Refreshing players...");
         Task<List<Player>> task = new Task<>() {
             @Override
             protected List<Player> call() {
+                System.out.println("  PlayersTabController - Loading all players");
                 return playerDAO.getAllPlayers();
             }
         };
         
         task.setOnSucceeded(e -> {
             List<Player> players = task.getValue();
+            System.out.println("  PlayersTabController - Loaded " + (players != null ? players.size() : 0) + " players");
             if (players != null) {
                 playersData.setAll(players);
             }
             LoadingDialog.hideLoading();
         });
         
-        task.setOnFailed(e -> LoadingDialog.hideLoading());
+        task.setOnFailed(e -> {
+            System.err.println("  PlayersTabController - Load failed");
+            LoadingDialog.hideLoading();
+        });
         
         new Thread(task).start();
     }
@@ -259,20 +270,28 @@ public class PlayersTabController {
     }
 
     private void updatePlayer(Player player) {
+        System.out.println("\n=== PlayersTabController.updatePlayer() START ===");
+        System.out.println("Player ID: " + player.getId() + ", Username: " + player.getUsername());
         Task<Boolean> updateTask = new Task<>() {
             @Override
             protected Boolean call() {
+                System.out.println("  Background task: Updating player in database");
                 return playerDAO.updatePlayer(player);
             }
         };
 
         updateTask.setOnSucceeded(e -> {
+            System.out.println("  Update task succeeded");
             if (updateTask.getValue()) {
                 MainApp.showInfo("Success", "Player updated successfully");
                 loadPlayers();
+                if (onPlayerUpdateCallback != null) {
+                    onPlayerUpdateCallback.run();
+                }
             } else {
                 MainApp.showError("Error", "Failed to update player");
             }
+            System.out.println("=== PlayersTabController.updatePlayer() END ===\n");
         });
 
         updateTask.setOnFailed(e ->

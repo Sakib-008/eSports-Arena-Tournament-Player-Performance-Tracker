@@ -51,6 +51,7 @@ public class TournamentsTabController {
     private ObservableList<Tournament> tournamentsData;
     private ObservableList<Team> teamsData;
     private MatchesTabController matchesTabController;
+    private LeaderboardTabController leaderboardTabController;
 
     public void initialize(TournamentDAO tournamentDAO, MatchDAO matchDAO, TeamDAO teamDAO, 
                           ObservableList<Team> teamsData, MatchesTabController matchesTabController) {
@@ -62,6 +63,10 @@ public class TournamentsTabController {
         this.tournamentsData = FXCollections.observableArrayList();
         setupTournamentsList();
         loadTournaments();
+    }
+
+    public void setLeaderboardTabController(LeaderboardTabController leaderboardTabController) {
+        this.leaderboardTabController = leaderboardTabController;
     }
 
     private void setupTournamentsList() {
@@ -266,8 +271,12 @@ public class TournamentsTabController {
             if (saveTask.getValue() > 0) {
                 MainApp.showInfo("Success", "Tournament created successfully!");
                 loadTournaments();
+                // Refresh tournament filters in all tabs
                 if (matchesTabController != null) {
                     matchesTabController.refreshTournamentFilter();
+                }
+                if (leaderboardTabController != null) {
+                    leaderboardTabController.refreshTournamentFilter();
                 }
             } else {
                 MainApp.showError("Error", "Failed to create tournament");

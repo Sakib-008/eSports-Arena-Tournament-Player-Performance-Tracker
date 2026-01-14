@@ -13,6 +13,7 @@ import com.esports.arena.model.Tournament;
 import com.esports.arena.util.LoadingDialog;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -34,12 +35,14 @@ public class LeaderboardTabController {
     private TournamentDAO tournamentDAO;
     private MatchDAO matchDAO;
     private Integer currentTournamentFilter;
+    private ObservableList<Team> leaderboardData;
 
     public void initialize(TeamDAO teamDAO) {
         this.teamDAO = teamDAO;
         this.tournamentDAO = new TournamentDAO();
         this.matchDAO = new MatchDAO();
         this.currentTournamentFilter = null;
+        this.leaderboardData = FXCollections.observableArrayList();
         setupLeaderboardTable();
         loadTournamentFilter();
         updateLeaderboard();
@@ -57,6 +60,7 @@ public class LeaderboardTabController {
                 javafx.beans.binding.Bindings.createDoubleBinding(
                         () -> cellData.getValue().getWinRate()
                 ).asObject());
+        leaderboardTable.setItems(leaderboardData);
     }
 
     private void loadTournamentFilter() {
@@ -107,32 +111,48 @@ public class LeaderboardTabController {
         updateLeaderboard();
     }
 
+    public void refreshTournamentFilter() {
+        loadTournamentFilter();
+    }
+
     public void updateLeaderboard() {
+        System.out.println("LeaderboardTabController.updateLeaderboard() called");
+        System.out.println("  Current tournament filter: " + (currentTournamentFilter != null ? currentTournamentFilter : "None"));
         LoadingDialog.showLoading("Updating leaderboard...");
         Task<List<Team>> task = new Task<>() {
             @Override
             protected List<Team> call() {
+                System.out.println("  LeaderboardTabController - Loading teams in background task");
                 if (currentTournamentFilter == null) {
                     // Overall leaderboard
-                    return teamDAO.getLeaderboard();
+                    List<Team> teams = teamDAO.getLeaderboard();
+                    System.out.println("  LeaderboardTabController - Loaded " + teams.size() + " teams for overall leaderboard");
+                    return teams;
                 } else {
                     // Tournament-specific leaderboard
-                    return getTournamentLeaderboard(currentTournamentFilter);
+                    List<Team> teams = getTournamentLeaderboard(currentTournamentFilter);
+                    System.out.println("  LeaderboardTabController - Loaded " + teams.size() + " teams for tournament " + currentTournamentFilter);
+                    return teams;
                 }
             }
         };
 
         task.setOnSucceeded(e -> {
-                leaderboardTable.setItems(FXCollections.observableArrayList(task.getValue()));
+                System.out.println("  LeaderboardTabController - Task succeeded, updating table with " + task.getValue().size() + " teams");
+                leaderboardData.setAll(task.getValue());
+                System.out.println("  LeaderboardTabController - Table updated");
                 LoadingDialog.hideLoading();
         });
 
         task.setOnFailed(e -> {
+                System.err.println("LeaderboardTabController - Task failed: " + e.getSource().getException().getMessage());
+                e.getSource().getException().printStackTrace();
                 MainApp.showError("Error", "Failed to update leaderboard");
                 LoadingDialog.hideLoading();
         });
 
         new Thread(task).start();
+        System.out.println("  LeaderboardTabController - Background thread started");
     }
 
     private List<Team> getTournamentLeaderboard(int tournamentId) {

@@ -9,6 +9,7 @@ import com.esports.arena.dao.TeamDAO;
 import com.esports.arena.util.LoadingDialog;
 import com.esports.arena.model.Match;
 import com.esports.arena.model.Player;
+import com.esports.arena.model.PlayerMatchStats;
 import com.esports.arena.model.Team;
 
 import javafx.collections.FXCollections;
@@ -53,6 +54,8 @@ public class MatchesTabController {
     private record MatchDetailData(Match match, Team team1, Team team2,
                                    List<Player> playersTeam1, List<Player> playersTeam2,
                                    List<com.esports.arena.model.PlayerMatchStats> stats) { }
+    
+    private record PlayerStatsInput(int playerId, int kills, int deaths, int assists) { }
 
     public void initialize(MatchDAO matchDAO, TeamDAO teamDAO, PlayerDAO playerDAO, ObservableList<Team> teamsData) {
         this.matchDAO = matchDAO;
@@ -163,6 +166,17 @@ public class MatchesTabController {
         matchRoundCol.setCellValueFactory(new PropertyValueFactory<>("round"));
 
         matchesTable.setItems(matchesData);
+
+        // Disable edit button for completed matches
+        matchesTable.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && newVal.getStatus() == Match.MatchStatus.COMPLETED) {
+                editMatchStatsBtn.setDisable(true);
+                editMatchStatsBtn.setStyle("-fx-opacity: 0.5;");
+            } else {
+                editMatchStatsBtn.setDisable(false);
+                editMatchStatsBtn.setStyle("");
+            }
+        });
     }
 
     private Team findTeamInCache(int teamId) {
@@ -238,23 +252,29 @@ public class MatchesTabController {
     }
 
     public void updateMatchesList() {
+        System.out.println("MatchesTabController.updateMatchesList() called");
         LoadingDialog.showLoading("Refreshing matches...");
         Task<List<Match>> task = new Task<>() {
             @Override
             protected List<Match> call() {
+                System.out.println("  MatchesTabController - Loading all matches");
                 return matchDAO.getAllMatches();
             }
         };
         
         task.setOnSucceeded(e -> {
             List<Match> matches = task.getValue();
+            System.out.println("  MatchesTabController - Loaded " + (matches != null ? matches.size() : 0) + " matches");
             if (matches != null) {
                 matchesData.setAll(matches);
             }
             LoadingDialog.hideLoading();
         });
         
-        task.setOnFailed(e -> LoadingDialog.hideLoading());
+        task.setOnFailed(e -> {
+            System.err.println("  MatchesTabController - Load failed");
+            LoadingDialog.hideLoading();
+        });
         
         new Thread(task).start();
     }
@@ -288,6 +308,12 @@ public class MatchesTabController {
             LoadingDialog.hideLoading();
             MatchDetailData data = loadTask.getValue();
 
+            System.out.println("Viewing match details for match ID: " + data.match().getId());
+            System.out.println("Found " + data.stats().size() + " player stats entries");
+            for (com.esports.arena.model.PlayerMatchStats stat : data.stats()) {
+                System.out.println("  Player " + stat.getPlayerId() + ": K=" + stat.getKills() + " D=" + stat.getDeaths() + " A=" + stat.getAssists());
+            }
+
             Dialog<Void> dialog = new Dialog<>();
             dialog.setTitle("Match Details - " + data.match().getId());
             dialog.setHeaderText("View Match Details and Player Stats");
@@ -313,7 +339,9 @@ public class MatchesTabController {
             VBox playersContainer = new VBox(10);
 
             if (!data.playersTeam1().isEmpty()) {
-                playersContainer.getChildren().add(new Label((data.team1() != null ? data.team1().getName() : "Team 1") + " Players"));
+                Label team1Label = new Label((data.team1() != null ? data.team1().getName() : "Team 1") + " Players");
+                team1Label.setStyle("-fx-font-weight: bold;");
+                playersContainer.getChildren().add(team1Label);
                 for (Player p : data.playersTeam1()) {
                     com.esports.arena.model.PlayerMatchStats pStats = data.stats().stream()
                             .filter(s -> s.getPlayerId() == p.getId())
@@ -323,19 +351,26 @@ public class MatchesTabController {
                     int deaths = pStats != null ? pStats.getDeaths() : 0;
                     int assists = pStats != null ? pStats.getAssists() : 0;
 
-                    HBox row = new HBox(8);
+                    System.out.println("Team1 Player " + p.getUsername() + " (ID:" + p.getId() + "): Found stats=" + (pStats != null) + ", K=" + kills + " D=" + deaths + " A=" + assists);
+
+                    HBox row = new HBox(15);
+                    Label nameLabel = new Label(p.getUsername());
+                    nameLabel.setPrefWidth(150);
                     row.getChildren().addAll(
-                        new Label(p.getUsername()),
-                        new Label("K: " + kills),
-                        new Label("D: " + deaths),
-                        new Label("A: " + assists)
+                        nameLabel,
+                        new Label("Kills: " + kills),
+                        new Label("Deaths: " + deaths),
+                        new Label("Assists: " + assists)
                     );
                     playersContainer.getChildren().add(row);
                 }
             }
 
             if (!data.playersTeam2().isEmpty()) {
-                playersContainer.getChildren().add(new Label((data.team2() != null ? data.team2().getName() : "Team 2") + " Players"));
+                playersContainer.getChildren().add(new Separator());
+                Label team2Label = new Label((data.team2() != null ? data.team2().getName() : "Team 2") + " Players");
+                team2Label.setStyle("-fx-font-weight: bold;");
+                playersContainer.getChildren().add(team2Label);
                 for (Player p : data.playersTeam2()) {
                     com.esports.arena.model.PlayerMatchStats pStats = data.stats().stream()
                             .filter(s -> s.getPlayerId() == p.getId())
@@ -345,12 +380,16 @@ public class MatchesTabController {
                     int deaths = pStats != null ? pStats.getDeaths() : 0;
                     int assists = pStats != null ? pStats.getAssists() : 0;
 
-                    HBox row = new HBox(8);
+                    System.out.println("Team2 Player " + p.getUsername() + " (ID:" + p.getId() + "): Found stats=" + (pStats != null) + ", K=" + kills + " D=" + deaths + " A=" + assists);
+
+                    HBox row = new HBox(15);
+                    Label nameLabel = new Label(p.getUsername());
+                    nameLabel.setPrefWidth(150);
                     row.getChildren().addAll(
-                        new Label(p.getUsername()),
-                        new Label("K: " + kills),
-                        new Label("D: " + deaths),
-                        new Label("A: " + assists)
+                        nameLabel,
+                        new Label("Kills: " + kills),
+                        new Label("Deaths: " + deaths),
+                        new Label("Assists: " + assists)
                     );
                     playersContainer.getChildren().add(row);
                 }
@@ -507,48 +546,137 @@ public class MatchesTabController {
                         int team1Score = Integer.parseInt(team1ScoreField.getText());
                         int team2Score = Integer.parseInt(team2ScoreField.getText());
 
-                        Match match = data.match();
-                        Match.MatchStatus previousStatus = match.getStatus();
-                        Integer previousWinner = match.getWinnerId();
-
-                        match.setTeam1Score(team1Score);
-                        match.setTeam2Score(team2Score);
-                        match.setStatus(Match.MatchStatus.COMPLETED);
-
                         boolean winnerDecided = team1Score != team2Score;
                         if (!winnerDecided) {
                             MainApp.showError("Invalid Score", "Scores cannot be tied for a completed match");
                             return null;
                         }
 
-                        int winningTeamId = team1Score > team2Score ? match.getTeam1Id() : match.getTeam2Id();
-                        int losingTeamId = winningTeamId == match.getTeam1Id() ? match.getTeam2Id() : match.getTeam1Id();
-                        match.setWinnerId(winningTeamId);
-                        boolean shouldUpdateTeamRecords = previousStatus != Match.MatchStatus.COMPLETED || previousWinner == null;
-
+                        // Collect input data before closing dialog
+                        List<PlayerStatsInput> statsInputs = new java.util.ArrayList<>();
                         for (PlayerInputs pi : inputs) {
-                            int kills = Integer.parseInt(pi.kills.getText());
-                            int deaths = Integer.parseInt(pi.deaths.getText());
-                            int assists = Integer.parseInt(pi.assists.getText());
-                            matchDAO.updatePlayerStats(match.getId(), pi.playerId, kills, deaths, assists);
-
-                            boolean onWinningTeam = (winningTeamId == match.getTeam1Id() && playersTeam1.stream().anyMatch(p -> p.getId() == pi.playerId))
-                                    || (winningTeamId == match.getTeam2Id() && playersTeam2.stream().anyMatch(p -> p.getId() == pi.playerId));
-                            if (shouldUpdateTeamRecords) { // reuse flag to avoid double-counting player totals on re-finalize
-                                playerDAO.updatePlayerStats(pi.playerId, kills, deaths, assists, onWinningTeam);
+                            try {
+                                int kills = Integer.parseInt(pi.kills.getText());
+                                int deaths = Integer.parseInt(pi.deaths.getText());
+                                int assists = Integer.parseInt(pi.assists.getText());
+                                statsInputs.add(new PlayerStatsInput(pi.playerId, kills, deaths, assists));
+                            } catch (NumberFormatException ex) {
+                                MainApp.showError("Invalid Input", "Please enter valid numeric values for all player stats");
+                                return null;
                             }
                         }
 
-                        if (shouldUpdateTeamRecords) {
-                            teamDAO.updateTeamRecord(winningTeamId, true, false);
-                            teamDAO.updateTeamRecord(losingTeamId, false, false);
-                        }
+                        // Run finalization in background
+                        javafx.application.Platform.runLater(() -> {
+                            LoadingDialog.showLoading("Finalizing match and updating stats...");
+                            Task<Boolean> finalizeTask = new Task<>() {
+                                @Override
+                                protected Boolean call() {
+                                    try {
+                                        Match match = data.match();
+                                        Match.MatchStatus previousStatus = match.getStatus();
+                                        Integer previousWinner = match.getWinnerId();
 
-                        matchDAO.updateMatch(match);
-                        loadMatchesForTournament(match.getTournamentId());
-                        MainApp.showInfo("Success", "Match finalized and stats saved");
+                                        match.setTeam1Score(team1Score);
+                                        match.setTeam2Score(team2Score);
+                                        match.setStatus(Match.MatchStatus.COMPLETED);
+
+                                        int winningTeamId = team1Score > team2Score ? match.getTeam1Id() : match.getTeam2Id();
+                                        int losingTeamId = winningTeamId == match.getTeam1Id() ? match.getTeam2Id() : match.getTeam1Id();
+                                        match.setWinnerId(winningTeamId);
+                                        boolean shouldUpdateTeamRecords = previousStatus != Match.MatchStatus.COMPLETED || previousWinner == null;
+
+                                        System.out.println("Updating match stats for match ID: " + match.getId());
+                                        System.out.println("Should update records: " + shouldUpdateTeamRecords);
+
+                                        // Update player match stats and career stats
+                                        for (PlayerStatsInput psi : statsInputs) {
+                                            System.out.println("Updating stats for player " + psi.playerId + ": K=" + psi.kills + " D=" + psi.deaths + " A=" + psi.assists);
+                                            matchDAO.updatePlayerStats(match.getId(), psi.playerId, psi.kills, psi.deaths, psi.assists);
+
+                                            boolean onWinningTeam = (winningTeamId == match.getTeam1Id() && playersTeam1.stream().anyMatch(p -> p.getId() == psi.playerId))
+                                                    || (winningTeamId == match.getTeam2Id() && playersTeam2.stream().anyMatch(p -> p.getId() == psi.playerId));
+                                            if (shouldUpdateTeamRecords) {
+                                                System.out.println("Updating career stats for player " + psi.playerId + ", won: " + onWinningTeam);
+                                                playerDAO.updatePlayerStats(psi.playerId, psi.kills, psi.deaths, psi.assists, onWinningTeam);
+                                            }
+                                        }
+
+                                        // Update team records
+                                        if (shouldUpdateTeamRecords) {
+                                            System.out.println("Updating team records: Winner=" + winningTeamId + ", Loser=" + losingTeamId);
+                                            teamDAO.updateTeamRecord(winningTeamId, true, false);
+                                            teamDAO.updateTeamRecord(losingTeamId, false, false);
+                                        }
+
+                                        // Reload match from database to ensure all playerStats are there
+                                        Match reloadedMatch = matchDAO.getMatchById(match.getId());
+                                        System.out.println("Match reloaded from DB - player stats count: " + (reloadedMatch.getPlayerStats() != null ? reloadedMatch.getPlayerStats().size() : 0));
+                                        if (reloadedMatch.getPlayerStats() != null && !reloadedMatch.getPlayerStats().isEmpty()) {
+                                            for (PlayerMatchStats pms : reloadedMatch.getPlayerStats()) {
+                                                System.out.println("  Stored stat - Player: " + pms.getPlayerId() + ", K=" + pms.getKills() + " D=" + pms.getDeaths() + " A=" + pms.getAssists());
+                                            }
+                                        }
+
+                                        // Copy the scores and status to the reloaded match
+                                        System.out.println("Before merge - reloaded match status: " + reloadedMatch.getStatus() + ", score: " + reloadedMatch.getTeam1Score() + "-" + reloadedMatch.getTeam2Score());
+                                        reloadedMatch.setTeam1Score(match.getTeam1Score());
+                                        reloadedMatch.setTeam2Score(match.getTeam2Score());
+                                        reloadedMatch.setStatus(match.getStatus());
+                                        reloadedMatch.setWinnerId(match.getWinnerId());
+                                        System.out.println("After merge - reloaded match status: " + reloadedMatch.getStatus() + ", score: " + reloadedMatch.getTeam1Score() + "-" + reloadedMatch.getTeam2Score());
+
+                                        // Save match again to ensure all changes are persisted
+                                        System.out.println("Final match save - player stats count before save: " + (reloadedMatch.getPlayerStats() != null ? reloadedMatch.getPlayerStats().size() : 0));
+                                        matchDAO.updateMatch(reloadedMatch);
+                                        System.out.println("Match finalization complete!");
+                                        return true;
+                                    } catch (Exception ex) {
+                                        System.err.println("EXCEPTION DURING MATCH FINALIZATION: " + ex.getMessage());
+                                        ex.printStackTrace();
+                                        return false;
+                                    }
+                                }
+                            };
+
+                            finalizeTask.setOnSucceeded(e -> {
+                                LoadingDialog.hideLoading();
+                                    if (finalizeTask.getValue()) {
+                                        System.out.println("Match finalization succeeded!");
+                                        loadMatchesForTournament(data.match().getTournamentId());
+                                        if (teamsData != null) {
+                                            // Refresh team data
+                                            Task<List<Team>> refreshTeamsTask = new Task<>() {
+                                                @Override
+                                                protected List<Team> call() {
+                                                    return teamDAO.getAllTeams();
+                                                }
+                                            };
+                                            refreshTeamsTask.setOnSucceeded(ev -> teamsData.setAll(refreshTeamsTask.getValue()));
+                                            new Thread(refreshTeamsTask).start();
+                                        }
+                                        MainApp.showInfo("Success", "Match finalized and stats saved");
+                                    } else {
+                                        System.err.println("Match finalization returned false!");
+                                        MainApp.showError("Error", "Match finalization failed - check logs");
+                                }
+                            });
+
+                            finalizeTask.setOnFailed(e -> {
+                                LoadingDialog.hideLoading();
+                                    Throwable cause = finalizeTask.getException();
+                                    System.err.println("Match finalization failed: " + (cause != null ? cause.getMessage() : "Unknown error"));
+                                    if (cause != null) {
+                                        cause.printStackTrace();
+                                    }
+                                    MainApp.showError("Error", "Failed to finalize match: " + (cause != null ? cause.getMessage() : "Unknown error"));
+                            });
+
+                            new Thread(finalizeTask).start();
+                        });
+
                     } catch (NumberFormatException ex) {
-                        MainApp.showError("Invalid Input", "Please enter valid numeric scores and stats");
+                        MainApp.showError("Invalid Input", "Please enter valid numeric scores");
                     }
                 }
                 return null;

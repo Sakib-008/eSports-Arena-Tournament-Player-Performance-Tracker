@@ -45,6 +45,7 @@ public class TeamsTabController {
     private TeamDAO teamDAO;
     private PlayerDAO playerDAO;
     private ObservableList<Team> teamsData;
+    private Runnable onTeamUpdateCallback;
 
     public void initialize(TeamDAO teamDAO, PlayerDAO playerDAO) {
         this.teamDAO = teamDAO;
@@ -52,6 +53,10 @@ public class TeamsTabController {
         this.teamsData = FXCollections.observableArrayList();
         setupTeamsTable();
         loadTeams();
+    }
+
+    public void setOnTeamUpdateCallback(Runnable callback) {
+        this.onTeamUpdateCallback = callback;
     }
 
     private void setupTeamsTable() {
@@ -173,12 +178,17 @@ public class TeamsTabController {
     }
 
     private void saveTeam(Team team) {
+        System.out.println("\n=== TeamsTabController.saveTeam() START ===");
+        System.out.println("Team ID: " + team.getId() + ", Name: " + team.getName());
         Task<Integer> saveTask = new Task<>() {
             @Override
             protected Integer call() {
+                System.out.println("  Background task: Saving team to database");
                 if (team.getId() == 0) {
+                    System.out.println("  Creating new team");
                     return teamDAO.createTeam(team);
                 } else {
+                    System.out.println("  Updating existing team");
                     teamDAO.updateTeam(team);
                     return team.getId();
                 }
@@ -186,12 +196,27 @@ public class TeamsTabController {
         };
 
         saveTask.setOnSucceeded(e -> {
+            System.out.println("  Save task succeeded, team ID: " + saveTask.getValue());
             MainApp.showInfo("Success", "Team saved successfully");
+            
+            // Refresh this tab's data
+            System.out.println("  Reloading teams list");
             loadTeams();
+            
+            // Fire callback to notify other tabs - they will do their own async refresh
+            System.out.println("  Firing callback to other tabs");
+            if (onTeamUpdateCallback != null) {
+                onTeamUpdateCallback.run();
+            } else {
+                System.err.println("  ERROR: onTeamUpdateCallback is NULL!");
+            }
+            System.out.println("=== TeamsTabController.saveTeam() END ===\n");
         });
 
-        saveTask.setOnFailed(e ->
-                MainApp.showError("Error", "Failed to save team"));
+        saveTask.setOnFailed(e -> {
+            System.err.println("Save task failed: " + e.getSource().getException().getMessage());
+            MainApp.showError("Error", "Failed to save team");
+        });
 
         new Thread(saveTask).start();
     }
@@ -216,20 +241,27 @@ public class TeamsTabController {
 
             alert.showAndWait().ifPresent(response -> {
                 if (response == ButtonType.OK) {
+                    System.out.println("\n=== TeamsTabController.handleDeleteTeam() START ===");
                     Task<Boolean> deleteTask = new Task<>() {
                         @Override
                         protected Boolean call() {
+                            System.out.println("  Background task: Deleting team " + selected.getId());
                             return teamDAO.deleteTeam(selected.getId());
                         }
                     };
 
                     deleteTask.setOnSucceeded(e -> {
+                        System.out.println("  Delete task succeeded");
                         if (deleteTask.getValue()) {
                             MainApp.showInfo("Success", "Team deleted successfully");
                             loadTeams();
+                            if (onTeamUpdateCallback != null) {
+                                onTeamUpdateCallback.run();
+                            }
                         } else {
                             MainApp.showError("Error", "Failed to delete team");
                         }
+                        System.out.println("=== TeamsTabController.handleDeleteTeam() END ===\n");
                     });
 
                     new Thread(deleteTask).start();

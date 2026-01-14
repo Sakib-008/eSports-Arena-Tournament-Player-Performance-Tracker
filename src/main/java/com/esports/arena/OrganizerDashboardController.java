@@ -84,15 +84,21 @@ public class OrganizerDashboardController {
     private void handleRefresh() {
         LoadingDialog.showLoading("Refreshing all data...");
         
-        Task<Void> refreshTask = new Task<>() {
+        Task<List<Team>> refreshTask = new Task<>() {
             @Override
-            protected Void call() {
-                // Load all data in background
-                return null;
+            protected List<Team> call() {
+                // Reload shared teams data
+                return teamDAO.getAllTeams();
             }
         };
         
         refreshTask.setOnSucceeded(e -> {
+            // Update shared teams data
+            List<Team> teams = refreshTask.getValue();
+            if (teams != null) {
+                teamsData.setAll(teams);
+            }
+            
             // Trigger all tab updates (they are already async)
             if (teamsTabController != null) {
                 teamsTabController.updateTeamsList();
@@ -157,6 +163,49 @@ public class OrganizerDashboardController {
             leaderboardTab.setContent(leaderboardLoader.load());
             leaderboardTabController = leaderboardLoader.getController();
             leaderboardTabController.initialize(teamDAO);
+
+            // Connect leaderboard to tournaments tab for refresh
+            if (tournamentsTabController != null) {
+                tournamentsTabController.setLeaderboardTabController(leaderboardTabController);
+            }
+
+            // Set up team update callback to refresh other tabs
+            if (teamsTabController != null) {
+                teamsTabController.setOnTeamUpdateCallback(() -> {
+                    System.out.println("\n>>> CALLBACK FIRED: Team updated - refreshing other tabs");
+                    if (leaderboardTabController != null) {
+                        System.out.println("    [1] Leaderboard controller found - calling updateLeaderboard()");
+                        leaderboardTabController.updateLeaderboard();
+                        System.out.println("    [1] updateLeaderboard() call completed");
+                    } else {
+                        System.err.println("    [ERROR] LeaderboardTabController is NULL!");
+                    }
+                    if (playersTabController != null) {
+                        System.out.println("    [2] Players controller found - calling updatePlayersList()");
+                        playersTabController.updatePlayersList();
+                        System.out.println("    [2] updatePlayersList() call completed");
+                    }
+                    if (matchesTabController != null) {
+                        System.out.println("    [3] Matches controller found - calling updateMatchesList()");
+                        matchesTabController.updateMatchesList();
+                        System.out.println("    [3] updateMatchesList() call completed");
+                    }
+                    System.out.println(">>> Callback execution finished\n");
+                });
+                System.out.println("Team update callback set successfully");
+            } else {
+                System.err.println("ERROR: TeamsTabController is NULL - cannot set callback!");
+            }
+
+            // Set up player update callback to refresh other tabs
+            if (playersTabController != null) {
+                playersTabController.setOnPlayerUpdateCallback(() -> {
+                    System.out.println("Player updated - refreshing other tabs");
+                    if (matchesTabController != null) {
+                        matchesTabController.updateMatchesList();
+                    }
+                });
+            }
 
         } catch (Exception e) {
             System.err.println("Error initializing tab controllers: " + e.getMessage());
